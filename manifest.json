@@ -1,6 +1,6 @@
 {
   "name": "Taskbar Accent",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "runtime": "trusted-native-canvas-v1",
   "entry": "dist/index.html",
   "native": {

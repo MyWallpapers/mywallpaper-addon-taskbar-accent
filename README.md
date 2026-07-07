@@ -1,6 +1,6 @@
 # Taskbar Accent
 
-MyWallpaper add-on with a native Windhawk part. The Canvas OS layer is intentionally transparent; the native part runs inside `explorer.exe` and applies a live taskbar blur, transparent, or color accent.
+MyWallpaper add-on with a native Windhawk part. The Canvas OS layer is intentionally transparent; the native part runs inside `explorer.exe` and applies a live XAML taskbar blur, transparent, or color accent.
 
 ## Settings
 

@@ -1,5 +1,6 @@
 // @include explorer.exe
 #include <windows.h>
+#include <stdio.h>
 
 struct ACCENT_POLICY {
     int AccentState;
@@ -67,6 +68,13 @@ static COLORREF ParseColor(PCWSTR text, COLORREF fallback) {
         iswxdigit(text[5]) &&
         iswxdigit(text[6])) {
         return RGB(HexByte(text + 1), HexByte(text + 3), HexByte(text + 5));
+    }
+    int r = 0;
+    int g = 0;
+    int b = 0;
+    if (swscanf_s(text, L"rgb(%d, %d, %d)", &r, &g, &b) == 3 ||
+        swscanf_s(text, L"rgba(%d, %d, %d", &r, &g, &b) == 3) {
+        return RGB(ClampInt(r, 0, 255), ClampInt(g, 0, 255), ClampInt(b, 0, 255));
     }
     return fallback;
 }
@@ -197,4 +205,3 @@ void Wh_ModSettingsChanged() {
 void Wh_ModUninit() {
     ResetTaskbarAccent();
 }
-

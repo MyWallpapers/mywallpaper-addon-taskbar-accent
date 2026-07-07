@@ -1,6 +1,6 @@
 {
   "name": "Taskbar Accent",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "trusted-native-canvas-v1",
   "entry": "dist/index.html",
   "native": {
@@ -68,14 +68,6 @@
         "max": 255,
         "step": 1
       }
-    },
-    "showStatus": {
-      "type": "boolean",
-      "content": {
-        "label": "Show canvas status label",
-        "default": true
-      }
     }
   }
 }
-

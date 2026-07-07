@@ -112,9 +112,11 @@ static ACCENT_POLICY ReadAccentPolicy() {
         policy.AccentState = ACCENT_DISABLED;
     } else if (Equals(mode, L"transparent")) {
         policy.AccentState = ACCENT_ENABLE_TRANSPARENTGRADIENT;
-        policy.GradientColor = GradientColor(color, opacity);
+        policy.AccentFlags = 0x13;
+        policy.GradientColor = 0;
     } else if (Equals(mode, L"accent")) {
-        policy.AccentState = ACCENT_ENABLE_GRADIENT;
+        policy.AccentState = ACCENT_ENABLE_TRANSPARENTGRADIENT;
+        policy.AccentFlags = 0x13;
         policy.GradientColor = GradientColor(color, opacity);
     } else if (Equals(mode, L"acrylic")) {
         policy.AccentState = ACCENT_ENABLE_ACRYLICBLURBEHIND;
@@ -198,7 +200,8 @@ static void ResetTaskbarAccent() {
     }
 
     ACCENT_POLICY policy = {};
-    policy.AccentState = ACCENT_DISABLED;
+    policy.AccentState = ACCENT_ENABLE_TRANSPARENTGRADIENT;
+    policy.AccentFlags = 0x13;
     HWND mainTaskbar = FindWindowW(L"Shell_TrayWnd", nullptr);
     if (mainTaskbar) {
         ApplyAccentToWindow(mainTaskbar, policy);

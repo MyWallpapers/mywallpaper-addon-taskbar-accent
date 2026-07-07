@@ -1,0 +1,11 @@
+node_modules/
+!dist/
+dist/*
+!dist/index.html
+!dist/assets/
+!dist/assets/**
+.DS_Store
+*.log
+.env
+.idea/
+.vscode/

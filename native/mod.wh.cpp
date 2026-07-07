@@ -28,6 +28,7 @@ enum AccentState {
 static constexpr int WCA_ACCENT_POLICY = 19;
 
 static SetWindowCompositionAttributeFunc g_setWindowCompositionAttribute = nullptr;
+static SetWindowCompositionAttributeFunc g_originalSetWindowCompositionAttribute = nullptr;
 
 static int ClampInt(int value, int minValue, int maxValue) {
     if (value < minValue) {
@@ -90,59 +91,18 @@ static bool Equals(PCWSTR left, PCWSTR right) {
     return left && right && _wcsicmp(left, right) == 0;
 }
 
-static void ApplyAccentToWindow(HWND hwnd, bool enabled, PCWSTR mode, COLORREF color, int opacity) {
-    if (!hwnd || !g_setWindowCompositionAttribute) {
-        return;
-    }
-
-    ACCENT_POLICY policy = {};
-    if (!enabled) {
-        policy.AccentState = ACCENT_DISABLED;
-    } else if (Equals(mode, L"transparent")) {
-        policy.AccentState = ACCENT_ENABLE_TRANSPARENTGRADIENT;
-        policy.GradientColor = GradientColor(color, opacity);
-    } else if (Equals(mode, L"accent")) {
-        policy.AccentState = ACCENT_ENABLE_GRADIENT;
-        policy.GradientColor = GradientColor(color, opacity);
-    } else {
-        policy.AccentState = ACCENT_ENABLE_BLURBEHIND;
-        policy.GradientColor = GradientColor(color, opacity);
-    }
-
-    WINDOWCOMPOSITIONATTRIBDATA data = {};
-    data.Attrib = WCA_ACCENT_POLICY;
-    data.pvData = &policy;
-    data.cbData = sizeof(policy);
-    g_setWindowCompositionAttribute(hwnd, &data);
-}
-
-static BOOL CALLBACK ApplyToSecondaryTaskbar(HWND hwnd, LPARAM lParam) {
+static bool IsTaskbarWindow(HWND hwnd) {
     WCHAR className[64];
-    if (GetClassNameW(hwnd, className, ARRAYSIZE(className)) &&
-        wcscmp(className, L"Shell_SecondaryTrayWnd") == 0) {
-        auto context = reinterpret_cast<ACCENT_POLICY*>(lParam);
-        WINDOWCOMPOSITIONATTRIBDATA data = {};
-        data.Attrib = WCA_ACCENT_POLICY;
-        data.pvData = context;
-        data.cbData = sizeof(*context);
-        g_setWindowCompositionAttribute(hwnd, &data);
+    if (!hwnd || !GetClassNameW(hwnd, className, ARRAYSIZE(className))) {
+        return false;
     }
-    return TRUE;
+    return wcscmp(className, L"Shell_TrayWnd") == 0 ||
+        wcscmp(className, L"Shell_SecondaryTrayWnd") == 0;
 }
 
-static void ApplyTaskbarAccent() {
-    if (!g_setWindowCompositionAttribute) {
-        HMODULE user32 = GetModuleHandleW(L"user32.dll");
-        g_setWindowCompositionAttribute = reinterpret_cast<SetWindowCompositionAttributeFunc>(
-            GetProcAddress(user32, "SetWindowCompositionAttribute"));
-    }
-    if (!g_setWindowCompositionAttribute) {
-        return;
-    }
-
+static ACCENT_POLICY ReadAccentPolicy() {
     PCWSTR mode = Wh_GetStringSetting(L"mode");
     PCWSTR colorText = Wh_GetStringSetting(L"accentColor");
-
     bool enabled = Wh_GetIntSetting(L"enabled") != 0;
     int opacity = ClampInt(Wh_GetIntSetting(L"opacity"), 0, 255);
     COLORREF color = ParseColor(colorText, RGB(31, 143, 255));
@@ -156,23 +116,80 @@ static void ApplyTaskbarAccent() {
     } else if (Equals(mode, L"accent")) {
         policy.AccentState = ACCENT_ENABLE_GRADIENT;
         policy.GradientColor = GradientColor(color, opacity);
+    } else if (Equals(mode, L"acrylic")) {
+        policy.AccentState = ACCENT_ENABLE_ACRYLICBLURBEHIND;
+        policy.GradientColor = GradientColor(color, opacity);
     } else {
         policy.AccentState = ACCENT_ENABLE_BLURBEHIND;
         policy.GradientColor = GradientColor(color, opacity);
     }
 
-    HWND mainTaskbar = FindWindowW(L"Shell_TrayWnd", nullptr);
-    if (mainTaskbar) {
-        WINDOWCOMPOSITIONATTRIBDATA data = {};
-        data.Attrib = WCA_ACCENT_POLICY;
-        data.pvData = &policy;
-        data.cbData = sizeof(policy);
-        g_setWindowCompositionAttribute(mainTaskbar, &data);
-    }
-    EnumWindows(ApplyToSecondaryTaskbar, reinterpret_cast<LPARAM>(&policy));
-
     Wh_FreeStringSetting(mode);
     Wh_FreeStringSetting(colorText);
+    return policy;
+}
+
+static BOOL CallSetWindowCompositionAttribute(HWND hwnd, WINDOWCOMPOSITIONATTRIBDATA* data) {
+    auto call = g_originalSetWindowCompositionAttribute ?
+        g_originalSetWindowCompositionAttribute :
+        g_setWindowCompositionAttribute;
+    return call ? call(hwnd, data) : FALSE;
+}
+
+static void ApplyAccentToWindow(HWND hwnd, const ACCENT_POLICY& policy) {
+    if (!hwnd) {
+        return;
+    }
+
+    ACCENT_POLICY localPolicy = policy;
+    WINDOWCOMPOSITIONATTRIBDATA data = {};
+    data.Attrib = WCA_ACCENT_POLICY;
+    data.pvData = &localPolicy;
+    data.cbData = sizeof(localPolicy);
+    CallSetWindowCompositionAttribute(hwnd, &data);
+}
+
+static BOOL WINAPI SetWindowCompositionAttributeHook(HWND hwnd, WINDOWCOMPOSITIONATTRIBDATA* data) {
+    if (!data || data->Attrib != WCA_ACCENT_POLICY || !IsTaskbarWindow(hwnd)) {
+        return CallSetWindowCompositionAttribute(hwnd, data);
+    }
+
+    ACCENT_POLICY policy = ReadAccentPolicy();
+    WINDOWCOMPOSITIONATTRIBDATA overrideData = {};
+    overrideData.Attrib = WCA_ACCENT_POLICY;
+    overrideData.pvData = &policy;
+    overrideData.cbData = sizeof(policy);
+    return CallSetWindowCompositionAttribute(hwnd, &overrideData);
+}
+
+static void EnsureCompositionFunction() {
+    if (!g_setWindowCompositionAttribute) {
+        HMODULE user32 = GetModuleHandleW(L"user32.dll");
+        g_setWindowCompositionAttribute = reinterpret_cast<SetWindowCompositionAttributeFunc>(
+            GetProcAddress(user32, "SetWindowCompositionAttribute"));
+    }
+}
+
+static BOOL CALLBACK ApplyToSecondaryTaskbar(HWND hwnd, LPARAM lParam) {
+    if (IsTaskbarWindow(hwnd)) {
+        auto context = reinterpret_cast<ACCENT_POLICY*>(lParam);
+        ApplyAccentToWindow(hwnd, *context);
+    }
+    return TRUE;
+}
+
+static void ApplyTaskbarAccent() {
+    EnsureCompositionFunction();
+    if (!g_setWindowCompositionAttribute) {
+        return;
+    }
+
+    ACCENT_POLICY policy = ReadAccentPolicy();
+    HWND mainTaskbar = FindWindowW(L"Shell_TrayWnd", nullptr);
+    if (mainTaskbar) {
+        ApplyAccentToWindow(mainTaskbar, policy);
+    }
+    EnumWindows(ApplyToSecondaryTaskbar, reinterpret_cast<LPARAM>(&policy));
 }
 
 static void ResetTaskbarAccent() {
@@ -184,16 +201,19 @@ static void ResetTaskbarAccent() {
     policy.AccentState = ACCENT_DISABLED;
     HWND mainTaskbar = FindWindowW(L"Shell_TrayWnd", nullptr);
     if (mainTaskbar) {
-        WINDOWCOMPOSITIONATTRIBDATA data = {};
-        data.Attrib = WCA_ACCENT_POLICY;
-        data.pvData = &policy;
-        data.cbData = sizeof(policy);
-        g_setWindowCompositionAttribute(mainTaskbar, &data);
+        ApplyAccentToWindow(mainTaskbar, policy);
     }
     EnumWindows(ApplyToSecondaryTaskbar, reinterpret_cast<LPARAM>(&policy));
 }
 
 BOOL Wh_ModInit() {
+    EnsureCompositionFunction();
+    if (g_setWindowCompositionAttribute) {
+        Wh_SetFunctionHook(
+            reinterpret_cast<void*>(g_setWindowCompositionAttribute),
+            reinterpret_cast<void*>(SetWindowCompositionAttributeHook),
+            reinterpret_cast<void**>(&g_originalSetWindowCompositionAttribute));
+    }
     ApplyTaskbarAccent();
     return TRUE;
 }

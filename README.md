@@ -5,7 +5,7 @@ MyWallpaper add-on with a native Windhawk part. The Canvas OS layer is intention
 ## Settings
 
 - `enabled`: turns the native taskbar accent on or off.
-- `mode`: `blur`, `transparent`, or `accent`.
+- `mode`: `blur`, `acrylic`, `transparent`, or `accent`.
 - `accentColor`: color used by transparent/accent modes.
 - `opacity`: alpha from `0` to `255`.
 Changing settings in MyWallpaper updates the Windhawk config, and the native mod applies the new value through `Wh_ModSettingsChanged`.

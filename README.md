@@ -10,9 +10,11 @@ Windhawk settings store, and calls `Wh_ModSettingsChanged` after live updates.
 
 ## Development
 
+Use Node.js 22 or newer and the pnpm version pinned by `packageManager`:
+
 ```powershell
-corepack pnpm install
-corepack pnpm dev
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
 For the complete native preview, run `mywallpaper dev` from this directory
@@ -28,4 +30,6 @@ desktop reports disabled, incompatible, conflicting and quarantined states and
 stops reinjection after an Explorer-correlated crash loop.
 
 The add-on source is GPL-3.0-or-later because it is adapted from Windhawk's
-Windows 11 Taskbar Styler.
+[Windows 11 Taskbar Styler at upstream commit
+`528a6c2e0d6156984c16d123309d8fb2a1f488d2`](https://github.com/m417z/my-windhawk-mods/blob/528a6c2e0d6156984c16d123309d8fb2a1f488d2/mods/windows-11-taskbar-styler.wh.cpp).
+The full license text is included in [LICENSE](LICENSE).

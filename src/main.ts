@@ -63,10 +63,21 @@ const stopState = layer.native.hooks.onStateChange((statuses) => {
 })
 
 const stopEvents = layer.native.hooks.onEvent((event) => {
-  if (event.hookId !== 'taskbar' || event.topic !== 'taskbar.restart-required') return
+  if (event.hookId !== 'taskbar'
+    || (event.topic !== 'taskbar.restart-required'
+      && event.topic !== 'taskbar.invalid-settings')) return
   const payload = isRecord(event.payload) ? event.payload : {}
-  const cause = typeof payload['cause'] === 'string' ? payload['cause'] : 'Explorer must restart before the accent can activate.'
-  const action = typeof payload['action'] === 'string' ? payload['action'] : 'Open Settings → Add-ons and retry.'
+  const invalidSettings = event.topic === 'taskbar.invalid-settings'
+  const cause = typeof payload['cause'] === 'string'
+    ? payload['cause']
+    : invalidSettings
+      ? 'Taskbar Accent received invalid settings.'
+      : 'Explorer must restart before the accent can activate.'
+  const action = typeof payload['action'] === 'string'
+    ? payload['action']
+    : invalidSettings
+      ? 'Reset this add-on in Settings, then enable it again.'
+      : 'Open Settings → Add-ons and retry.'
   renderStatus('degraded', `${cause} ${action}`)
 })
 

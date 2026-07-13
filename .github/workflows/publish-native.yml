@@ -1,0 +1,17 @@
+name: Publish native build
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    uses: MyWallpapers/MyWallpaper/.github/workflows/native-addon-build.yml@c4dc4c79842f3fb2003dc849dac616e3f0387c59

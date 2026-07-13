@@ -1,16 +1,3 @@
-// ==WindhawkMod==
-// @id              mywallpaper-taskbar-accent
-// @name            MyWallpaper Taskbar Accent
-// @description     MyWallpaper XAML taskbar accent native mod
-// @version         1.3.2
-// @author          MyWallpaper Team, adapted from m417z
-// @github          https://github.com/MyWallpapers/mywallpaper-addon-taskbar-accent
-// @homepage        https://mywallpaper.online/
-// @include         explorer.exe
-// @architecture    x86-64
-// @compilerOptions -lcomctl32 -lole32 -loleaut32 -lruntimeobject -Wl,--export-all-symbols
-// ==/WindhawkMod==
-
 // Adapted from Windows 11 Taskbar Styler by m417z.
 // Source code is published under The GNU General Public License v3.0.
 //
@@ -29,6 +16,7 @@
 
 #include <atomic>
 #include <vector>
+#include <mywallpaper_windhawk.hpp>
 
 #undef GetCurrentTime
 
@@ -4908,89 +4896,11 @@ const Theme g_themeBorderless = {{
 std::atomic<bool> g_initialized;
 thread_local bool g_initializedForThread;
 
-HANDLE g_restartExplorerPromptThread;
-std::atomic<HWND> g_restartExplorerPromptWindow;
-
-constexpr WCHAR kRestartExplorerPromptTitle[] =
-    L"Windows 11 Taskbar Styler - Windhawk";
-constexpr WCHAR kRestartExplorerPromptTextFormat[] =
-    L"Restarting Explorer is required for the mod to activate.\n\nDo you want "
-    L"to restart Explorer now?\n\nStatus code: 0x%08X";
-constexpr WCHAR kRestartExplorerCommand[] =
-    LR"(cmd /c "echo Terminating Explorer...)"
-    LR"( & taskkill /f /im explorer.exe)"
-    LR"( & timeout /t 1 /nobreak >nul)"
-    LR"( & start explorer.exe)"
-    LR"( & echo Starting Explorer...)"
-    LR"( & timeout /t 3 /nobreak >nul")";
-
 void PromptToRestartExplorer(HRESULT statusCode) {
-    if (g_restartExplorerPromptThread) {
-        if (WaitForSingleObject(g_restartExplorerPromptThread, 0) !=
-            WAIT_OBJECT_0) {
-            return;
-        }
-
-        CloseHandle(g_restartExplorerPromptThread);
-    }
-
-    g_restartExplorerPromptThread = CreateThread(
-        nullptr, 0,
-        [](LPVOID lpParameter) -> DWORD {
-            HRESULT statusCode =
-                static_cast<HRESULT>(reinterpret_cast<ULONG_PTR>(lpParameter));
-
-            WCHAR promptText[256];
-            _snwprintf_s(promptText, _TRUNCATE,
-                         kRestartExplorerPromptTextFormat, statusCode);
-
-            TASKDIALOGCONFIG taskDialogConfig{
-                .cbSize = sizeof(taskDialogConfig),
-                .dwFlags = TDF_ALLOW_DIALOG_CANCELLATION,
-                .dwCommonButtons = TDCBF_YES_BUTTON | TDCBF_NO_BUTTON,
-                .pszWindowTitle = kRestartExplorerPromptTitle,
-                .pszMainIcon = TD_INFORMATION_ICON,
-                .pszContent = promptText,
-                .pfCallback = [](HWND hwnd, UINT msg, WPARAM wParam,
-                                 LPARAM lParam, LONG_PTR lpRefData) -> HRESULT {
-                    switch (msg) {
-                        case TDN_CREATED:
-                            g_restartExplorerPromptWindow = hwnd;
-                            SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,
-                                         SWP_NOMOVE | SWP_NOSIZE);
-                            break;
-
-                        case TDN_DESTROYED:
-                            g_restartExplorerPromptWindow = nullptr;
-                            break;
-                    }
-
-                    return S_OK;
-                },
-            };
-
-            int button;
-            if (SUCCEEDED(TaskDialogIndirect(&taskDialogConfig, &button,
-                                             nullptr, nullptr)) &&
-                button == IDYES) {
-                WCHAR commandLine[ARRAYSIZE(kRestartExplorerCommand)];
-                memcpy(commandLine, kRestartExplorerCommand,
-                       sizeof(kRestartExplorerCommand));
-                STARTUPINFO si = {
-                    .cb = sizeof(si),
-                };
-                PROCESS_INFORMATION pi{};
-                if (CreateProcess(nullptr, commandLine, nullptr, nullptr, FALSE,
-                                  0, nullptr, nullptr, &si, &pi)) {
-                    CloseHandle(pi.hThread);
-                    CloseHandle(pi.hProcess);
-                }
-            }
-
-            return 0;
-        },
-        reinterpret_cast<LPVOID>(static_cast<ULONG_PTR>(statusCode)), 0,
-        nullptr);
+    Wh_Log(L"Taskbar initialization requires an Explorer restart: 0x%08X", statusCode);
+    mywallpaper::windhawk::emit_event(
+        "taskbar.restart-required",
+        "{\"cause\":\"The taskbar XAML diagnostics endpoint was unavailable.\",\"action\":\"Restart Explorer from MyWallpaper Settings, then retry this add-on.\"}");
 }
 
 void ApplyCustomizations(InstanceHandle handle,
@@ -5051,6 +4961,7 @@ public:
     void UnadviseVisualTreeChange();
 
 private:
+    static DWORD WINAPI AdviseThreadProc(LPVOID parameter);
     HRESULT STDMETHODCALLTYPE OnVisualTreeChange(ParentChildRelation relation, VisualElement element, VisualMutationType mutationType) override;
     HRESULT STDMETHODCALLTYPE OnElementStateChanged(InstanceHandle element, VisualElementState elementState, LPCWSTR context) noexcept override;
 
@@ -5068,6 +4979,18 @@ private:
 
 #pragma region visualtreewatcher_cpp
 
+DWORD WINAPI VisualTreeWatcher::AdviseThreadProc(LPVOID parameter)
+{
+    auto watcher = reinterpret_cast<VisualTreeWatcher*>(parameter);
+    HRESULT hr = watcher->m_XamlDiagnostics.as<IVisualTreeService3>()->AdviseVisualTreeChange(watcher);
+    watcher->Release();
+    if (FAILED(hr)) {
+        Wh_Log(L"AdviseVisualTreeChange failed with error %08X", hr);
+        PromptToRestartExplorer(hr);
+    }
+    return 0;
+}
+
 VisualTreeWatcher::VisualTreeWatcher(winrt::com_ptr<IUnknown> site) :
     m_XamlDiagnostics(site.as<IXamlDiagnostics>())
 {
@@ -5077,19 +5000,7 @@ VisualTreeWatcher::VisualTreeWatcher(winrt::com_ptr<IUnknown> site) :
     // Calling AdviseVisualTreeChange from the current thread causes the app to
     // hang in Advising::RunOnUIThread sometimes. Creating a new thread and
     // calling it from there fixes it.
-    HANDLE thread = CreateThread(
-        nullptr, 0,
-        [](LPVOID lpParam) -> DWORD {
-            auto watcher = reinterpret_cast<VisualTreeWatcher*>(lpParam);
-            HRESULT hr = watcher->m_XamlDiagnostics.as<IVisualTreeService3>()->AdviseVisualTreeChange(watcher);
-            watcher->Release();
-            if (FAILED(hr)) {
-                Wh_Log(L"AdviseVisualTreeChange failed with error %08X", hr);
-                PromptToRestartExplorer(hr);
-            }
-            return 0;
-        },
-        this, 0, nullptr);
+    HANDLE thread = CreateThread(nullptr, 0, AdviseThreadProc, this, 0, nullptr);
     if (thread) {
         AddRef();
         CloseHandle(thread);
@@ -11009,16 +10920,33 @@ void InitializeSettingsAndTap() {
 
 using RunFromWindowThreadProc_t = void(WINAPI*)(PVOID parameter);
 
+struct RUN_FROM_WINDOW_THREAD_PARAM {
+    RunFromWindowThreadProc_t proc;
+    PVOID procParam;
+};
+
+UINT RunFromWindowThreadMessage() {
+    static const UINT message =
+        RegisterWindowMessage(L"Windhawk_RunFromWindowThread_" WH_MOD_ID);
+    return message;
+}
+
+LRESULT CALLBACK RunFromWindowThreadHookProc(int nCode, WPARAM wParam,
+                                              LPARAM lParam) {
+    if (nCode == HC_ACTION) {
+        const CWPSTRUCT* cwp = reinterpret_cast<const CWPSTRUCT*>(lParam);
+        if (cwp->message == RunFromWindowThreadMessage()) {
+            auto* param = reinterpret_cast<RUN_FROM_WINDOW_THREAD_PARAM*>(cwp->lParam);
+            param->proc(param->procParam);
+        }
+    }
+    return CallNextHookEx(nullptr, nCode, wParam, lParam);
+}
+
 bool RunFromWindowThread(HWND hWnd,
                          RunFromWindowThreadProc_t proc,
                          PVOID procParam) {
-    static const UINT runFromWindowThreadRegisteredMsg =
-        RegisterWindowMessage(L"Windhawk_RunFromWindowThread_" WH_MOD_ID);
-
-    struct RUN_FROM_WINDOW_THREAD_PARAM {
-        RunFromWindowThreadProc_t proc;
-        PVOID procParam;
-    };
+    const UINT runFromWindowThreadRegisteredMsg = RunFromWindowThreadMessage();
 
     DWORD dwThreadId = GetWindowThreadProcessId(hWnd, nullptr);
     if (dwThreadId == 0) {
@@ -11032,18 +10960,7 @@ bool RunFromWindowThread(HWND hWnd,
 
     HHOOK hook = SetWindowsHookEx(
         WH_CALLWNDPROC,
-        [](int nCode, WPARAM wParam, LPARAM lParam) -> LRESULT {
-            if (nCode == HC_ACTION) {
-                const CWPSTRUCT* cwp = (const CWPSTRUCT*)lParam;
-                if (cwp->message == runFromWindowThreadRegisteredMsg) {
-                    RUN_FROM_WINDOW_THREAD_PARAM* param =
-                        (RUN_FROM_WINDOW_THREAD_PARAM*)cwp->lParam;
-                    param->proc(param->procParam);
-                }
-            }
-
-            return CallNextHookEx(nullptr, nCode, wParam, lParam);
-        },
+        RunFromWindowThreadHookProc,
         nullptr, dwThreadId);
     if (!hook) {
         return false;
@@ -11311,37 +11228,49 @@ HMODULE WINAPI LoadLibraryExW_Hook(LPCWSTR lpLibFileName,
     return module;
 }
 
+struct ENUM_WINDOWS_PARAM {
+    std::vector<HWND>* hWnds;
+};
+
+BOOL CALLBACK CollectXamlHostWindow(HWND hWnd, LPARAM lParam) {
+    auto& param = *reinterpret_cast<ENUM_WINDOWS_PARAM*>(lParam);
+
+    DWORD dwProcessId = 0;
+    if (!GetWindowThreadProcessId(hWnd, &dwProcessId) ||
+        dwProcessId != GetCurrentProcessId()) {
+        return TRUE;
+    }
+
+    WCHAR szClassName[32];
+    if (GetClassName(hWnd, szClassName, ARRAYSIZE(szClassName)) == 0) {
+        return TRUE;
+    }
+
+    if (_wcsicmp(szClassName, L"XamlExplorerHostIslandWindow") == 0 ||
+        _wcsicmp(szClassName, L"Shell_InputSwitchTopLevelWindow") == 0) {
+        param.hWnds->push_back(hWnd);
+    }
+    return TRUE;
+}
+
+BOOL CALLBACK FindTaskbarWindow(HWND hWnd, LPARAM lParam) {
+    DWORD dwProcessId;
+    WCHAR className[32];
+    if (GetWindowThreadProcessId(hWnd, &dwProcessId) &&
+        dwProcessId == GetCurrentProcessId() &&
+        GetClassName(hWnd, className, ARRAYSIZE(className)) &&
+        _wcsicmp(className, L"Shell_TrayWnd") == 0) {
+        *reinterpret_cast<HWND*>(lParam) = hWnd;
+        return FALSE;
+    }
+    return TRUE;
+}
+
 std::vector<HWND> GetXamlHostWnds() {
-    struct ENUM_WINDOWS_PARAM {
-        std::vector<HWND>* hWnds;
-    };
 
     std::vector<HWND> hWnds;
     ENUM_WINDOWS_PARAM param = {&hWnds};
-    EnumWindows(
-        [](HWND hWnd, LPARAM lParam) -> BOOL {
-            ENUM_WINDOWS_PARAM& param = *(ENUM_WINDOWS_PARAM*)lParam;
-
-            DWORD dwProcessId = 0;
-            if (!GetWindowThreadProcessId(hWnd, &dwProcessId) ||
-                dwProcessId != GetCurrentProcessId()) {
-                return TRUE;
-            }
-
-            WCHAR szClassName[32];
-            if (GetClassName(hWnd, szClassName, ARRAYSIZE(szClassName)) == 0) {
-                return TRUE;
-            }
-
-            if (_wcsicmp(szClassName, L"XamlExplorerHostIslandWindow") == 0 ||
-                _wcsicmp(szClassName, L"Shell_InputSwitchTopLevelWindow") ==
-                    0) {
-                param.hWnds->push_back(hWnd);
-            }
-
-            return TRUE;
-        },
-        (LPARAM)&param);
+    EnumWindows(CollectXamlHostWindow, reinterpret_cast<LPARAM>(&param));
 
     return hWnds;
 }
@@ -11349,20 +11278,7 @@ std::vector<HWND> GetXamlHostWnds() {
 HWND FindCurrentProcessTaskbarWnd() {
     HWND hTaskbarWnd = nullptr;
 
-    EnumWindows(
-        [](HWND hWnd, LPARAM lParam) -> BOOL {
-            DWORD dwProcessId;
-            WCHAR className[32];
-            if (GetWindowThreadProcessId(hWnd, &dwProcessId) &&
-                dwProcessId == GetCurrentProcessId() &&
-                GetClassName(hWnd, className, ARRAYSIZE(className)) &&
-                _wcsicmp(className, L"Shell_TrayWnd") == 0) {
-                *reinterpret_cast<HWND*>(lParam) = hWnd;
-                return FALSE;
-            }
-            return TRUE;
-        },
-        reinterpret_cast<LPARAM>(&hTaskbarWnd));
+    EnumWindows(FindTaskbarWindow, reinterpret_cast<LPARAM>(&hTaskbarWnd));
 
     return hTaskbarWnd;
 }
@@ -11383,6 +11299,7 @@ PTP_TIMER g_statsTimer;
 bool StartStatsTimer() {
     return false;
 
+#if 0
     static constexpr WCHAR kStatsBaseUrl[] =
         L"https://github.com/ramensoftware/"
         L"windows-11-taskbar-styling-guide/"
@@ -11495,6 +11412,7 @@ bool StartStatsTimer() {
     dueTimeFt.dwHighDateTime = (DWORD)(dueTime >> 32);
     SetThreadpoolTimer(g_statsTimer, &dueTimeFt, k24HoursInMs, k10MinutesInMs);
     return true;
+#endif
 }
 
 void StopStatsTimer() {
@@ -11564,6 +11482,19 @@ BOOL Wh_ModInit() {
     return TRUE;
 }
 
+void WINAPI InitializeWindowThread(PVOID) {
+    InitializeForCurrentThread();
+}
+
+void WINAPI UninitializeWindowThread(PVOID) {
+    UninitializeForCurrentThread();
+}
+
+void WINAPI ReinitializeWindowThread(PVOID) {
+    UninitializeForCurrentThread();
+    InitializeForCurrentThread();
+}
+
 void Wh_ModAfterInit() {
     Wh_Log(L">");
 
@@ -11572,16 +11503,13 @@ void Wh_ModAfterInit() {
     HWND hTaskbarUiWnd = GetTaskbarUiWnd();
     if (hTaskbarUiWnd) {
         Wh_Log(L"Initializing - Found DesktopWindowContentBridge window");
-        RunFromWindowThread(
-            hTaskbarUiWnd, [](PVOID) { InitializeForCurrentThread(); },
-            nullptr);
+        RunFromWindowThread(hTaskbarUiWnd, InitializeWindowThread, nullptr);
         initialize = true;
     }
 
     for (auto hXamlHostWnd : GetXamlHostWnds()) {
         Wh_Log(L"Initializing for %08X", (DWORD)(ULONG_PTR)hXamlHostWnd);
-        RunFromWindowThread(
-            hXamlHostWnd, [](PVOID) { InitializeForCurrentThread(); }, nullptr);
+        RunFromWindowThread(hXamlHostWnd, InitializeWindowThread, nullptr);
         initialize = true;
     }
 
@@ -11593,17 +11521,6 @@ void Wh_ModAfterInit() {
 void Wh_ModUninit() {
     Wh_Log(L">");
 
-    HWND restartExplorerPromptWindow = g_restartExplorerPromptWindow;
-    if (restartExplorerPromptWindow) {
-        PostMessage(restartExplorerPromptWindow, WM_CLOSE, 0, 0);
-    }
-
-    if (g_restartExplorerPromptThread) {
-        WaitForSingleObject(g_restartExplorerPromptThread, INFINITE);
-        CloseHandle(g_restartExplorerPromptThread);
-        g_restartExplorerPromptThread = nullptr;
-    }
-
     StopStatsTimer();
 
     UninitializeSettingsAndTap();
@@ -11611,16 +11528,12 @@ void Wh_ModUninit() {
     HWND hTaskbarUiWnd = GetTaskbarUiWnd();
     if (hTaskbarUiWnd) {
         Wh_Log(L"Uninitializing - Found DesktopWindowContentBridge window");
-        RunFromWindowThread(
-            hTaskbarUiWnd, [](PVOID) { UninitializeForCurrentThread(); },
-            nullptr);
+        RunFromWindowThread(hTaskbarUiWnd, UninitializeWindowThread, nullptr);
     }
 
     for (auto hXamlHostWnd : GetXamlHostWnds()) {
         Wh_Log(L"Uninitializing for %08X", (DWORD)(ULONG_PTR)hXamlHostWnd);
-        RunFromWindowThread(
-            hXamlHostWnd, [](PVOID) { UninitializeForCurrentThread(); },
-            nullptr);
+        RunFromWindowThread(hXamlHostWnd, UninitializeWindowThread, nullptr);
     }
 
     // Unregister global network status change handler.
@@ -11655,25 +11568,13 @@ void Wh_ModSettingsChanged() {
     HWND hTaskbarUiWnd = GetTaskbarUiWnd();
     if (hTaskbarUiWnd) {
         Wh_Log(L"Reinitializing - Found DesktopWindowContentBridge window");
-        RunFromWindowThread(
-            hTaskbarUiWnd,
-            [](PVOID) {
-                UninitializeForCurrentThread();
-                InitializeForCurrentThread();
-            },
-            nullptr);
+        RunFromWindowThread(hTaskbarUiWnd, ReinitializeWindowThread, nullptr);
         initialize = true;
     }
 
     for (auto hXamlHostWnd : GetXamlHostWnds()) {
         Wh_Log(L"Reinitializing for %08X", (DWORD)(ULONG_PTR)hXamlHostWnd);
-        RunFromWindowThread(
-            hXamlHostWnd,
-            [](PVOID) {
-                UninitializeForCurrentThread();
-                InitializeForCurrentThread();
-            },
-            nullptr);
+        RunFromWindowThread(hXamlHostWnd, ReinitializeWindowThread, nullptr);
         initialize = true;
     }
 

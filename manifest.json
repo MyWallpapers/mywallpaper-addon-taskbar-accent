@@ -1,18 +1,46 @@
 {
-  "name": "Taskbar Accent",
-  "version": "1.3.2",
   "runtime": "trusted-native-canvas-v1",
+  "name": "Taskbar Accent",
+  "version": "2.0.0",
   "entry": "dist/index.html",
-  "native": {
-    "runtime": "windhawk-native-v1",
-    "entry": "native/mod.wh.cpp"
-  },
-  "description": "Applies a live blur, transparent, or color accent to the Windows taskbar.",
-  "author": "MyWallpaper Team",
-  "type": "addon",
-  "categories": ["utilities", "desktop"],
-  "license": "GPL-3.0-or-later",
+  "settingsVersion": "2",
+  "homepage": "https://github.com/MyWallpapers/mywallpaper-addon-taskbar-accent",
   "repository": "https://github.com/MyWallpapers/mywallpaper-addon-taskbar-accent",
+  "settings": {
+    "enabled": {
+      "type": "boolean",
+      "label": "Enable taskbar accent",
+      "scope": "addon",
+      "default": true
+    },
+    "mode": {
+      "type": "select",
+      "label": "Taskbar mode",
+      "scope": "addon",
+      "default": "blur",
+      "options": [
+        { "label": "Blur", "value": "blur" },
+        { "label": "Acrylic blur", "value": "acrylic" },
+        { "label": "Transparent", "value": "transparent" },
+        { "label": "Accent color", "value": "accent" }
+      ]
+    },
+    "accentColor": {
+      "type": "color",
+      "label": "Accent color",
+      "scope": "addon",
+      "default": "#1f8fff"
+    },
+    "opacity": {
+      "type": "range",
+      "label": "Opacity",
+      "scope": "addon",
+      "default": 128,
+      "min": 0,
+      "max": 255,
+      "step": 1
+    }
+  },
   "defaultLayout": {
     "widthPercent": 22,
     "heightPercent": 8,
@@ -20,58 +48,17 @@
     "yPercent": 84,
     "rotation": 0
   },
+  "native": {
+    "hooks": [
+      {
+        "id": "taskbar",
+        "runtime": "windhawk-v1",
+        "source": "native/hooks/taskbar.wh.cpp",
+        "surface": "windows-shell-v1"
+      }
+    ]
+  },
   "ui": {
     "pointerEvents": "none"
-  },
-  "settings": {
-    "enabled": {
-      "type": "boolean",
-      "content": {
-        "label": "Enable taskbar accent",
-        "default": true
-      }
-    },
-    "mode": {
-      "type": "select",
-      "content": {
-        "label": "Taskbar mode",
-        "default": "blur",
-        "options": [
-          {
-            "label": "Blur",
-            "value": "blur"
-          },
-          {
-            "label": "Acrylic blur",
-            "value": "acrylic"
-          },
-          {
-            "label": "Transparent",
-            "value": "transparent"
-          },
-          {
-            "label": "Accent color",
-            "value": "accent"
-          }
-        ]
-      }
-    },
-    "accentColor": {
-      "type": "color",
-      "content": {
-        "label": "Accent color",
-        "default": "#1f8fff"
-      }
-    },
-    "opacity": {
-      "type": "range",
-      "content": {
-        "label": "Opacity",
-        "default": 128,
-        "min": 0,
-        "max": 255,
-        "step": 1
-      }
-    }
   }
 }

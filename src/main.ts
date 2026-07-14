@@ -63,10 +63,19 @@ const stopState = layer.native.hooks.onStateChange((statuses) => {
 })
 
 const stopEvents = layer.native.hooks.onEvent((event) => {
-  if (event.hookId !== 'taskbar' || event.topic !== 'taskbar.restart-required') return
+  if (event.hookId !== 'taskbar' || !event.topic.startsWith('taskbar.')) return
+  if (event.topic === 'taskbar.applied') {
+    renderStatus('active', 'Live · shared across every Windows taskbar')
+    return
+  }
+  if (event.topic === 'taskbar.disabled') {
+    renderStatus('disabled', 'Disabled in Taskbar Accent settings')
+    return
+  }
   const payload = isRecord(event.payload) ? event.payload : {}
-  const cause = typeof payload['cause'] === 'string' ? payload['cause'] : 'Explorer must restart before the accent can activate.'
-  const action = typeof payload['action'] === 'string' ? payload['action'] : 'Open Settings → Add-ons and retry.'
+  const cause = payload['cause']
+  const action = payload['action']
+  if (typeof cause !== 'string' || typeof action !== 'string') return
   renderStatus('degraded', `${cause} ${action}`)
 })
 

@@ -1,13 +1,14 @@
 {
   "name": "mywallpaper-addon-taskbar-accent",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.12.0",
   "scripts": {
     "build": "vite build",
     "dev": "vite --host 127.0.0.1 --port 5178",
-    "preview": "vite preview --host 0.0.0.0 --port 5178"
+    "preview": "vite preview --host 0.0.0.0 --port 5178",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

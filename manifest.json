@@ -1,7 +1,7 @@
 {
   "runtime": "trusted-native-canvas-v1",
   "name": "Taskbar Accent",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "entry": "dist/index.html",
   "settingsVersion": "2",
   "homepage": "https://github.com/MyWallpapers/mywallpaper-addon-taskbar-accent",

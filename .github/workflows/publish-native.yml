@@ -14,4 +14,4 @@ jobs:
       actions: read
       contents: read
       id-token: write
-    uses: MyWallpapers/native-addon-toolchain/.github/workflows/native-addon-build.yml@f2b54c880ab98926151273f7bb4587d9f863630b
+    uses: MyWallpapers/native-addon-toolchain/.github/workflows/native-addon-build.yml@021ed358b0d242831ea595b4de512b8a50dc684a

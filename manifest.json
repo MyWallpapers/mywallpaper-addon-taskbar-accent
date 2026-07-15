@@ -1,22 +1,28 @@
 {
-  "runtime": "trusted-native-canvas-v1",
+  "runtime": "canvas-v1",
   "name": "Taskbar Accent",
-  "version": "2.0.1",
+  "description": "Applies a configurable Windows composition effect to every taskbar through the official MyWallpaper native runtime.",
+  "version": "3.0.0",
   "entry": "dist/index.html",
-  "settingsVersion": "2",
-  "homepage": "https://github.com/MyWallpapers/mywallpaper-addon-taskbar-accent",
-  "repository": "https://github.com/MyWallpapers/mywallpaper-addon-taskbar-accent",
-  "settings": {
-    "enabled": {
+  "thumbnail": "assets/thumbnail.png",
+  "deviceSettingsVersion": "1",
+  "ui": {
+    "pointerEvents": "none"
+  },
+  "settings": [
+    {
+      "id": "enabled",
       "type": "boolean",
       "label": "Enable taskbar accent",
-      "scope": "addon",
+      "description": "Controls every Taskbar Accent instance on this device.",
+      "scope": "device",
       "default": true
     },
-    "mode": {
+    {
+      "id": "mode",
       "type": "select",
       "label": "Taskbar mode",
-      "scope": "addon",
+      "scope": "device",
       "default": "blur",
       "options": [
         { "label": "Blur", "value": "blur" },
@@ -25,29 +31,24 @@
         { "label": "Accent color", "value": "accent" }
       ]
     },
-    "accentColor": {
+    {
+      "id": "accentColor",
       "type": "color",
       "label": "Accent color",
-      "scope": "addon",
+      "scope": "device",
       "default": "#1f8fff"
     },
-    "opacity": {
+    {
+      "id": "opacity",
       "type": "range",
       "label": "Opacity",
-      "scope": "addon",
+      "scope": "device",
       "default": 128,
       "min": 0,
       "max": 255,
       "step": 1
     }
-  },
-  "defaultLayout": {
-    "widthPercent": 22,
-    "heightPercent": 8,
-    "xPercent": 39,
-    "yPercent": 84,
-    "rotation": 0
-  },
+  ],
   "native": {
     "hooks": [
       {
@@ -57,8 +58,5 @@
         "surface": "windows-shell-v1"
       }
     ]
-  },
-  "ui": {
-    "pointerEvents": "none"
   }
 }

@@ -5,9 +5,14 @@ Its Canvas layer reports native state while one shared `windhawk-v1` hook
 applies blur, acrylic, transparency or a solid accent to every taskbar that
 Explorer owns, including taskbars created after a monitor is connected.
 
-All four controls are add-on scoped because Windows has one effective taskbar
-configuration. MyWallpaper stores those values once, projects them to the
-Windhawk settings store, and calls `Wh_ModSettingsChanged` after live updates.
+All four controls use the `device` scope because Windows has one effective
+taskbar configuration. Canvas and the hook observe the same validated device
+profile; there is no second native settings store owned by the add-on.
+
+This baseline uses the immutable `canvas-v1` release contract. A published
+release is selected explicitly by its SemVer and distribution digest.
+MyWallpaper may recommend a newer release, but never updates an installed layer
+automatically.
 
 ## Development
 
@@ -23,10 +28,17 @@ with the released `@mywallpaper/cli`, enable Developer Mode in MyWallpaper
 Desktop, then load the loopback URL printed by the CLI. The CLI owns the pinned
 compiler, generated settings projection and x86, x64 and ARM64 hook outputs. A
 failed native build removes the previous preview instead of serving stale DLLs.
+`mywallpaper generate` derives the committed
+`generated/mywallpaper-runtime.d.ts` Canvas contract and
+`native/generated/mywallpaper_settings.hpp` after contract or device-setting
+changes. The native header is not committed; the CLI recreates it before every
+official build. `mywallpaper check` rejects a missing/stale Canvas declaration
+or any C/C++ source/header that bypasses the generated device getters.
 
 ## Safety
 
-The hook targets only MyWallpaper's reviewed `windows-shell-v1` surface. The
+The hook targets MyWallpaper's product-owned `windows-shell-v1` surface, meaning
+code executed inside Explorer rather than a taskbar sandbox. The
 desktop reports disabled, incompatible, conflicting and quarantined states and
 stops reinjection after an Explorer-correlated crash loop.
 
@@ -41,4 +53,6 @@ desktop add-on status instead of being hidden.
 The add-on source is GPL-3.0-only because its narrow composition boundary is
 adapted from Windhawk's official [Taskbar Background Helper at upstream commit
 `d8457487c989d6e919c16c2248291af2ae3aa338`](https://github.com/ramensoftware/windhawk-mods/blob/d8457487c989d6e919c16c2248291af2ae3aa338/mods/taskbar-background-helper.wh.cpp).
-The full license text is included in [LICENSE](LICENSE).
+The full license text is included in [LICENSE](LICENSE). The add-on thumbnail
+is an authored, immutable bundle asset; MyWallpaper validates and re-encodes it
+for the catalogue without choosing alternate content.

@@ -1,43 +1,8 @@
 import './styles.css'
-
-type HookStatus = { hookId: string } & (
-  | { state: 'active' }
-  | {
-      state: 'disabled' | 'starting' | 'degraded' | 'quarantined' | 'incompatible' | 'conflict'
-      cause: string
-      action: string
-    }
-)
-
-interface HookEvent {
-  hookId: string
-  topic: string
-  payload: unknown
-}
-
-interface MyWallpaperLayerApi {
-  root: HTMLElement
-  setPointerEvents(value: 'none'): void
-  lifecycle: { onDispose(listener: () => void): () => void }
-  native: {
-    hooks: {
-      readonly available: boolean
-      status(hookId: string): HookStatus | null
-      onStateChange(listener: (statuses: readonly HookStatus[]) => void): () => void
-      onEvent(listener: (event: HookEvent) => void): () => void
-    }
-  }
-}
-
-declare global {
-  interface Window {
-    MyWallpaper: { layer: MyWallpaperLayerApi }
-  }
-}
+import type { NativeHookStatus } from '../generated/mywallpaper-runtime'
 
 const layer = window.MyWallpaper.layer
 const root = layer.root
-layer.setPointerEvents('none')
 root.className = 'taskbar-accent-root'
 root.innerHTML = `
   <div class="status" data-state="starting" role="status" aria-live="polite">
@@ -63,12 +28,12 @@ const stopState = layer.native.hooks.onStateChange((statuses) => {
 })
 
 const stopEvents = layer.native.hooks.onEvent((event) => {
-  if (event.hookId !== 'taskbar' || !event.topic.startsWith('taskbar.')) return
-  if (event.topic === 'taskbar.applied') {
+  if (event.hookId !== 'taskbar' || !event.topic.startsWith('mywallpaper.taskbar-accent/v1/')) return
+  if (event.topic === 'mywallpaper.taskbar-accent/v1/applied') {
     renderStatus('active', 'Live · shared across every Windows taskbar')
     return
   }
-  if (event.topic === 'taskbar.disabled') {
+  if (event.topic === 'mywallpaper.taskbar-accent/v1/disabled') {
     renderStatus('disabled', 'Disabled in Taskbar Accent settings')
     return
   }
@@ -84,7 +49,7 @@ layer.lifecycle.onDispose(() => {
   stopEvents()
 })
 
-function renderStatus(state: HookStatus['state'], detail: string): void {
+function renderStatus(state: NativeHookStatus['state'], detail: string): void {
   statusCard.dataset['state'] = state
   statusDetail.textContent = detail
   statusCard.title = detail

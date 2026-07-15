@@ -1,0 +1,22 @@
+name: Publish MyWallpaper release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    concurrency:
+      group: mywallpaper-release-${{ github.repository_id }}-${{ github.ref }}
+      cancel-in-progress: false
+    permissions:
+      actions: read
+      attestations: write
+      contents: read
+      id-token: write
+    uses: MyWallpapers/native-addon-toolchain/.github/workflows/native-addon-build.yml@ed10015a8f06e5259c716a6492f3d51d961640ad
+    with:
+      channel: development

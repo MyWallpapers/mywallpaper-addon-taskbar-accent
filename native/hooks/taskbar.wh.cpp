@@ -9,12 +9,14 @@
 
 #include <windows.h>
 
+#include <cmath>
 #include <cstdint>
-#include <memory>
 #include <mutex>
 #include <optional>
+#include <string>
 #include <utility>
 
+#include <mywallpaper_settings.hpp>
 #include <mywallpaper_windhawk.hpp>
 #include <windhawk_utils.h>
 
@@ -64,17 +66,6 @@ struct Settings {
     DWORD gradientColor = 0;
 };
 
-struct WindhawkStringDeleter {
-    void operator()(const WCHAR* value) const {
-        if (value) {
-            Wh_FreeStringSetting(value);
-        }
-    }
-};
-
-using WindhawkString =
-    std::unique_ptr<const WCHAR[], WindhawkStringDeleter>;
-
 std::mutex g_settingsMutex;
 Settings g_settings;
 
@@ -83,12 +74,12 @@ void Emit(const char* topic, const char* payload) {
 }
 
 void EmitInvalidSettings() {
-    Emit("taskbar.invalid-settings",
+    Emit("mywallpaper.taskbar-accent/v1/invalid-settings",
          R"({"cause":"Taskbar Accent received settings outside its manifest contract.","action":"Reset this add-on in Settings → Add-ons, then enable it again."})");
 }
 
 void EmitApplyFailure() {
-    Emit("taskbar.apply-failed",
+    Emit("mywallpaper.taskbar-accent/v1/apply-failed",
          R"({"cause":"Windows rejected the requested taskbar composition appearance.","action":"Restart Windows Explorer from Task Manager, then choose Retry in Settings → Add-ons."})");
 }
 
@@ -132,30 +123,32 @@ std::optional<DWORD> ParseGradientColor(PCWSTR text, int opacity) {
 
 Settings ReadSettings() {
     Settings settings;
-    const int enabled = Wh_GetIntSetting(L"enabled");
-    const int opacity = Wh_GetIntSetting(L"opacity");
-    WindhawkString mode(Wh_GetStringSetting(L"mode"));
-    WindhawkString color(Wh_GetStringSetting(L"accentColor"));
-    if ((enabled != 0 && enabled != 1) || !mode || !color) {
+    const bool enabled = mywallpaper::settings::get_enabled();
+    const double opacityValue = mywallpaper::settings::get_opacity();
+    const std::wstring mode = mywallpaper::settings::get_mode();
+    const std::wstring color = mywallpaper::settings::get_accentColor();
+    if (!std::isfinite(opacityValue) || std::trunc(opacityValue) != opacityValue ||
+        opacityValue < 0 || opacityValue > 255) {
         return settings;
     }
-    if (wcscmp(mode.get(), L"blur") == 0) {
+    const int opacity = static_cast<int>(opacityValue);
+    if (mode == L"blur") {
         settings.mode = Mode::Blur;
-    } else if (wcscmp(mode.get(), L"acrylic") == 0) {
+    } else if (mode == L"acrylic") {
         settings.mode = Mode::Acrylic;
-    } else if (wcscmp(mode.get(), L"transparent") == 0) {
+    } else if (mode == L"transparent") {
         settings.mode = Mode::Transparent;
-    } else if (wcscmp(mode.get(), L"accent") == 0) {
+    } else if (mode == L"accent") {
         settings.mode = Mode::Accent;
     } else {
         return settings;
     }
-    const auto gradientColor = ParseGradientColor(color.get(), opacity);
+    const auto gradientColor = ParseGradientColor(color.c_str(), opacity);
     if (!gradientColor) {
         return settings;
     }
     settings.valid = true;
-    settings.enabled = enabled != 0;
+    settings.enabled = enabled;
     settings.gradientColor = *gradientColor;
     return settings;
 }
@@ -256,9 +249,9 @@ void ApplyAndReport(const Settings& settings) {
         return;
     }
     if (settings.enabled) {
-        Emit("taskbar.applied", R"({"state":"active"})");
+        Emit("mywallpaper.taskbar-accent/v1/applied", R"({"state":"active"})");
     } else {
-        Emit("taskbar.disabled", R"({"state":"disabled"})");
+        Emit("mywallpaper.taskbar-accent/v1/disabled", R"({"state":"disabled"})");
     }
 }
 

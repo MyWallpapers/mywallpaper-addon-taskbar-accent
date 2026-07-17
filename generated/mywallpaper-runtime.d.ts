@@ -13,6 +13,16 @@ export type RuntimeInstance = {
 	width: number;
 	height: number;
 };
+type ResourceValue = {
+	"kind": "pinned";
+	digest: string;
+	name: string;
+	mediaType?: string;
+	sizeBytes: number;
+} | {
+	"kind": "live";
+	url: string;
+};
 export type AddonValues = Record<string, JsonValue>;
 declare const CANVAS_HOST_MESSAGE_SOURCE = "mywallpaper-web-host";
 export type NativeConnectionState = "open" | "reconnecting" | "failed" | "closed";
@@ -41,7 +51,7 @@ export type NativeHookStatus = {
 } & ({
 	state: "active";
 } | {
-	state: "disabled" | "starting" | "degraded" | "quarantined" | "incompatible" | "conflict";
+	state: "disabled" | "starting" | "degraded" | "incompatible" | "conflict";
 	cause: string;
 	action: string;
 });
@@ -52,7 +62,7 @@ export interface NativeHookEvent {
 	process: {
 		pid: number;
 		executable: string;
-		architecture: "windows-x86" | "windows-x86_64" | "windows-aarch64";
+		architecture: "windows-x86_64" | "windows-aarch64";
 	};
 }
 export interface CanvasBusEvent {
@@ -70,7 +80,7 @@ export interface CanvasBus {
 }
 export interface LayerSettingsApi {
 	get(): AddonValues;
-	set(partial: AddonValues): void;
+	set(partial: AddonValues): Promise<void>;
 	subscribe(listener: CanvasApiListener<AddonValues>): () => void;
 }
 export interface LayerActionsApi {
@@ -78,6 +88,9 @@ export interface LayerActionsApi {
 }
 export interface LayerLifecycleApi {
 	onDispose(listener: () => void): () => void;
+}
+interface LayerResourcesApi {
+	resolve(value: ResourceValue): Promise<string>;
 }
 export interface CanvasRuntimeApi {
 	readonly surface: RuntimeSurface;
@@ -91,6 +104,7 @@ interface CanvasLayerApi {
 	readonly deviceSettings: LayerSettingsApi;
 	readonly actions: LayerActionsApi;
 	readonly lifecycle: LayerLifecycleApi;
+	readonly resources: LayerResourcesApi;
 	readonly bus: CanvasBus;
 	readonly native: LayerNativeApi;
 }

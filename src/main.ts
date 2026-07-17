@@ -2,6 +2,7 @@ import './styles.css'
 import type { NativeHookStatus } from '../generated/mywallpaper-runtime'
 
 const layer = window.MyWallpaper.layer
+const statusTopic = 'mywallpaper.taskbar-accent/v1/status'
 const root = layer.root
 root.className = 'taskbar-accent-root'
 root.innerHTML = `
@@ -53,6 +54,9 @@ function renderStatus(state: NativeHookStatus['state'], detail: string): void {
   statusCard.dataset['state'] = state
   statusDetail.textContent = detail
   statusCard.title = detail
+  if (window.MyWallpaper.runtime.instance.canonical) {
+    layer.bus.emit(statusTopic, { state, detail })
+  }
 }
 
 function requireElement<TElement extends Element>(selector: string): TElement {

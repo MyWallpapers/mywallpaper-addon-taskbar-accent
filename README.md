@@ -39,8 +39,9 @@ or any C/C++ source/header that bypasses the generated device getters.
 
 The hook targets MyWallpaper's product-owned `windows-shell-v1` surface, meaning
 code executed inside Explorer rather than a taskbar sandbox. The
-desktop reports disabled, incompatible, conflicting and quarantined states and
-stops reinjection after an Explorer-correlated crash loop.
+desktop reports disabled, incompatible and conflicting states. Explorer crashes
+attributed to a recently active hook remain diagnostic evidence only: they do
+not quarantine the add-on or prevent a later reinjection.
 
 The native code accepts only taskbar windows owned by the current Explorer
 process and the `Shell_TrayWnd` or `Shell_SecondaryTrayWnd` classes. It applies
@@ -49,6 +50,12 @@ resets the standard taskbar policy on unload. It has no XAML diagnostics
 session, selector engine, image loader or network path. Invalid settings and
 failed Windows composition calls are reported to both the Canvas layer and the
 desktop add-on status instead of being hidden.
+
+The canonical Canvas instance also publishes the current hook state on the
+scene-local `mywallpaper.taskbar-accent/v1/status` bus topic. The payload is
+ordinary JSON and includes the state plus the same human-readable detail shown
+by the layer, allowing another add-on in the scene to react without receiving
+special native privileges.
 
 The add-on source is GPL-3.0-only because its narrow composition boundary is
 adapted from Windhawk's official [Taskbar Background Helper at upstream commit

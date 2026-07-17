@@ -2,7 +2,7 @@
   "runtime": "canvas-v1",
   "name": "Taskbar Accent",
   "description": "Applies a configurable Windows composition effect to every taskbar through the official MyWallpaper native runtime.",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "entry": "dist/index.html",
   "thumbnail": "assets/thumbnail.png",
   "deviceSettingsVersion": "1",

@@ -97,7 +97,11 @@ export interface CanvasRuntimeApi {
 	readonly mode: RuntimeMode;
 	readonly instance: RuntimeInstance;
 }
-interface CanvasLayerApi {
+export interface CanvasLayerApi {
+	/**
+	 * Stable container owned by this layer instance. Every layer has a distinct
+	 * root, while all roots share the same Canvas `document` and `window`.
+	 */
 	readonly root: HTMLElement;
 	readonly layerId: string;
 	readonly settings: LayerSettingsApi;
@@ -108,22 +112,23 @@ interface CanvasLayerApi {
 	readonly bus: CanvasBus;
 	readonly native: LayerNativeApi;
 }
-export interface MyWallpaperCanvasApi {
+/** Explicit capability object passed only to an add-on's exported `mount`. */
+export interface CanvasAddonMountContext {
 	readonly runtime: CanvasRuntimeApi;
 	readonly layer: CanvasLayerApi;
+	/** Exact alias of `layer.bus`, provided for the concise public bus API. */
 	readonly bus: CanvasBus;
+}
+export type CanvasAddonCleanup = () => void;
+export type CanvasAddonMount = (context: CanvasAddonMountContext) => void | CanvasAddonCleanup;
+export interface CanvasAddonModule {
+	readonly mount: CanvasAddonMount;
 }
 interface CanvasActionMessage {
 	source: typeof CANVAS_HOST_MESSAGE_SOURCE;
 	type: "CANVAS_ACTION";
 	layerId: string;
 	key: string;
-}
-
-declare global {
-	interface Window {
-		MyWallpaper: MyWallpaperCanvasApi;
-	}
 }
 
 export {};

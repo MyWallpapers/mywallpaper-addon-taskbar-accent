@@ -1,16 +1,10 @@
-:root, body {
+.taskbar-accent-root {
   width: 100%;
   height: 100%;
   margin: 0;
   overflow: hidden;
   background: transparent;
-}
-
-* { box-sizing: border-box; }
-
-.taskbar-accent-root {
-  width: 100%;
-  height: 100%;
+  box-sizing: border-box;
   display: grid;
   place-items: center;
   padding: 6px;
@@ -18,7 +12,11 @@
   pointer-events: none;
 }
 
-.status {
+.taskbar-accent-root *,
+.taskbar-accent-root *::before,
+.taskbar-accent-root *::after { box-sizing: border-box; }
+
+.taskbar-accent-root .status {
   width: min(100%, 360px);
   min-width: 0;
   display: flex;
@@ -33,12 +31,11 @@
   backdrop-filter: blur(14px);
 }
 
-.status > div { min-width: 0; }
-.status strong { display: block; font-size: 11px; line-height: 1.2; }
-.status small { display: block; overflow: hidden; margin-top: 2px; color: rgb(225 234 247 / 56%); font-size: 9px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
-.dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #f2ba4b; box-shadow: 0 0 0 4px rgb(242 186 75 / 12%); }
-.status[data-state="active"] .dot { background: #69e69b; box-shadow: 0 0 0 4px rgb(105 230 155 / 12%); }
-.status[data-state="disabled"] .dot,
-.status[data-state="incompatible"] .dot,
-.status[data-state="conflict"] .dot,
-.status[data-state="quarantined"] .dot { background: #ff7f88; box-shadow: 0 0 0 4px rgb(255 127 136 / 12%); }
+.taskbar-accent-root .status > div { min-width: 0; }
+.taskbar-accent-root .status strong { display: block; font-size: 11px; line-height: 1.2; }
+.taskbar-accent-root .status small { display: block; overflow: hidden; margin-top: 2px; color: rgb(225 234 247 / 56%); font-size: 9px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.taskbar-accent-root .dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #f2ba4b; box-shadow: 0 0 0 4px rgb(242 186 75 / 12%); }
+.taskbar-accent-root .status[data-state="active"] .dot { background: #69e69b; box-shadow: 0 0 0 4px rgb(105 230 155 / 12%); }
+.taskbar-accent-root .status[data-state="disabled"] .dot,
+.taskbar-accent-root .status[data-state="incompatible"] .dot,
+.taskbar-accent-root .status[data-state="conflict"] .dot { background: #ff7f88; box-shadow: 0 0 0 4px rgb(255 127 136 / 12%); }

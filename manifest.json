@@ -1,8 +1,8 @@
 {
   "runtime": "canvas-v1",
   "name": "Taskbar Accent",
-  "description": "Applies a configurable Windows composition effect to every taskbar through the official MyWallpaper native runtime.",
-  "version": "3.0.0",
+  "description": "Styles every Windows 11 taskbar with deep XAML themes, simple appearance controls and the official MyWallpaper native runtime.",
+  "version": "4.0.0",
   "entry": "dist/index.html",
   "thumbnail": "assets/thumbnail.png",
   "deviceSettingsVersion": "1",
@@ -10,6 +10,11 @@
     "pointerEvents": "none"
   },
   "settings": [
+    {
+      "id": "generalSection",
+      "type": "section",
+      "label": "General"
+    },
     {
       "id": "enabled",
       "type": "boolean",
@@ -19,11 +24,67 @@
       "default": true
     },
     {
+      "id": "appearanceSection",
+      "type": "section",
+      "label": "Appearance"
+    },
+    {
+      "id": "theme",
+      "type": "select",
+      "label": "Theme",
+      "description": "Choose the simple MyWallpaper controls, no preset for advanced-only styling, or one of the integrated Taskbar Styler themes.",
+      "scope": "device",
+      "default": "mywallpaper-quick",
+      "options": [
+        { "label": "MyWallpaper quick appearance", "value": "mywallpaper-quick" },
+        { "label": "None (advanced styles only)", "value": "" },
+        { "label": "TranslucentTaskbar", "value": "TranslucentTaskbar" },
+        { "label": "DockLike", "value": "DockLike" },
+        { "label": "SimplyTransparent", "value": "SimplyTransparent" },
+        { "label": "Squircle", "value": "Squircle" },
+        { "label": "Matter", "value": "Matter" },
+        { "label": "WinXP", "value": "WinXP" },
+        { "label": "WinXP (Zune)", "value": "WinXP_variant_Zune" },
+        { "label": "Bubbles", "value": "Bubbles" },
+        { "label": "RosePine", "value": "RosePine" },
+        { "label": "WinVista", "value": "WinVista" },
+        { "label": "CleanSlate", "value": "CleanSlate" },
+        { "label": "Lucent (Accented Bar)", "value": "Lucent" },
+        { "label": "Lucent (Light Bar)", "value": "Lucent_variant_Light" },
+        { "label": "SunValley", "value": "SunValley" },
+        { "label": "SunValley (Legacy)", "value": "21996Taskbar" },
+        { "label": "BottomDensy", "value": "BottomDensy" },
+        { "label": "BottomDensy (NoInd)", "value": "BottomDensy_variant_NoInd" },
+        { "label": "TaskbarXII", "value": "TaskbarXII" },
+        { "label": "xdark", "value": "xdark" },
+        { "label": "Windows7", "value": "Windows7" },
+        { "label": "Aeris", "value": "Aeris" },
+        { "label": "Plasma", "value": "Plasma" },
+        { "label": "WindowGlass", "value": "WindowGlass" },
+        { "label": "WindowGlass (Split)", "value": "WindowGlass_variant_Split" },
+        { "label": "WindowGlass (Full-Length)", "value": "WindowGlass_variant_FullLength" },
+        { "label": "Surface", "value": "Surface" },
+        { "label": "Oversimplified & Accentuated", "value": "Oversimplified&Accentuated" },
+        { "label": "Luminosity (Dock)", "value": "Luminosity_variant_Dock" },
+        { "label": "Luminosity (Classic)", "value": "Luminosity_variant_Classic" },
+        { "label": "Luminosity (Compact)", "value": "Luminosity_variant_Compact" },
+        { "label": "LayerMicaUI", "value": "LayerMicaUI" },
+        { "label": "Fluid", "value": "Fluid" },
+        { "label": "TintedGlass", "value": "TintedGlass" },
+        { "label": "TaskbarToStatusbar", "value": "TaskbarToStatusbar" },
+        { "label": "UltraWideFriendly", "value": "UltraWideFriendly" },
+        { "label": "LiquidGlass", "value": "LiquidGlass" },
+        { "label": "LiquidGlass (Alternate)", "value": "LiquidGlass_variant_Alternate" },
+        { "label": "Borderless", "value": "Borderless" }
+      ]
+    },
+    {
       "id": "mode",
       "type": "select",
       "label": "Taskbar mode",
       "scope": "device",
       "default": "blur",
+      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" },
       "options": [
         { "label": "Blur", "value": "blur" },
         { "label": "Acrylic blur", "value": "acrylic" },
@@ -36,17 +97,79 @@
       "type": "color",
       "label": "Accent color",
       "scope": "device",
-      "default": "#1f8fff"
+      "default": "#1f8fff",
+      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
     },
     {
       "id": "opacity",
       "type": "range",
-      "label": "Opacity",
+      "label": "Tint opacity",
+      "description": "Controls the quick mode tint while preserving blur and acrylic material effects.",
       "scope": "device",
       "default": 128,
       "min": 0,
       "max": 255,
-      "step": 1
+      "step": 1,
+      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+    },
+    {
+      "id": "blurAmount",
+      "type": "range",
+      "label": "Blur amount",
+      "description": "Controls the WindhawkBlur radius used by the quick Blur and Acrylic modes.",
+      "scope": "device",
+      "default": 18,
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+    },
+    {
+      "id": "themeCustomizationSection",
+      "type": "section",
+      "label": "Theme customization"
+    },
+    {
+      "id": "styleConstants",
+      "type": "textarea",
+      "label": "Style constants",
+      "description": "One name=value entry per line. Values override constants exposed by the selected theme.",
+      "scope": "device",
+      "default": ""
+    },
+    {
+      "id": "advancedSection",
+      "type": "section",
+      "label": "Advanced XAML styling"
+    },
+    {
+      "id": "controlStyles",
+      "type": "textarea",
+      "label": "Control styles (JSON)",
+      "description": "A JSON array of objects shaped as {\"target\":\"...\",\"styles\":[\"Property=Value\"]}. These rules are applied after the selected theme.",
+      "scope": "device",
+      "default": "[]"
+    },
+    {
+      "id": "themeResourceVariables",
+      "type": "textarea",
+      "label": "Resource variables",
+      "description": "One Key=Value, Key@Dark=Value or Key@Light=Value entry per line.",
+      "scope": "device",
+      "default": ""
+    },
+    {
+      "id": "xamlDiagnosticsHandling",
+      "type": "select",
+      "label": "Other XAML diagnostics consumers",
+      "description": "Windows permits only one XAML diagnostics consumer. Alert asks before blocking; Block protects this add-on; Allow may let the other tool replace it.",
+      "scope": "device",
+      "default": "alert",
+      "options": [
+        { "label": "Alert before blocking", "value": "alert" },
+        { "label": "Block other consumers", "value": "block" },
+        { "label": "Allow other consumers", "value": "allow" }
+      ]
     }
   ],
   "native": {

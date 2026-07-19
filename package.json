@@ -1,6 +1,6 @@
 {
   "name": "mywallpaper-addon-taskbar-accent",
-  "version": "4.0.5",
+  "version": "4.0.6",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.12.0",

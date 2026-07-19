@@ -5,6 +5,8 @@ import { dirname, resolve } from 'node:path'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const manifest = JSON.parse(await readFile(resolve(root, 'manifest.json'), 'utf8'))
+const packageManifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'))
+const publishWorkflow = await readFile(resolve(root, '.github/workflows/publish.yml'), 'utf8')
 const wrapper = await readFile(resolve(root, 'native/hooks/taskbar.wh.cpp'), 'utf8')
 const vendor = await readFile(
   resolve(root, 'native/hooks/vendor/windows-11-taskbar-styler-v1.7.inc'),
@@ -15,6 +17,22 @@ const notices = await readFile(resolve(root, 'THIRD_PARTY_NOTICES.md'), 'utf8')
 function invariant(condition, message) {
   if (!condition) throw new Error(message)
 }
+
+invariant(
+  packageManifest.version === manifest.version,
+  'package version must match manifest version',
+)
+
+const reusableWorkflowPins = [
+  ...publishWorkflow.matchAll(
+    /uses:\s*MyWallpapers\/native-addon-toolchain\/\.github\/workflows\/native-addon-build\.yml@([^\s#]+)/g,
+  ),
+]
+invariant(reusableWorkflowPins.length === 1, 'publish workflow must reference the toolchain once')
+invariant(
+  /^[0-9a-f]{40}$/.test(reusableWorkflowPins[0][1]),
+  'publish workflow must pin the toolchain to an exact 40-character commit SHA',
+)
 
 const settings = new Map(manifest.settings.map((setting) => [setting.id, setting]))
 const theme = settings.get('theme')

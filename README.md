@@ -99,6 +99,48 @@ mywallpaper check
 Native setting changes call `Wh_ModSettingsChanged` in the already attached
 hook. They do not restart Explorer, a companion process or the Canvas layer.
 
+## Publishing
+
+Pushing a newly-created SemVer tag such as `v4.0.6` triggers the public
+MyWallpaper `admission-v1` workflow pinned by its exact reviewed commit SHA.
+The repository must have GitHub release immutability enabled once in its
+settings. The workflow creates a draft, attaches deterministic 1 GiB
+content-addressed parts for each logical archive, publishes it as an immutable
+release, and only then requests MyWallpaper admission. Two independent
+GitHub-hosted Windows
+builds must produce identical
+web, companion and hook bytes. A separate verifier creates the deterministic
+bundle, distribution SBOM, in-toto provenance and admission subject. The
+GitHub-hosted Ubuntu publisher attests the exact release ZIP through
+GitHub/Sigstore and uses a separate finalizer OIDC token for native evidence.
+
+```bash
+git tag v4.0.6
+git push origin v4.0.6
+```
+
+An exact rerun reuses only the same draft or already immutable release and the
+same content-addressed parts. It never replaces or deletes an asset. If
+GitHub immutability is disabled, publication fails closed before any
+MyWallpaper token is requested. An owner must delete the resulting mutable
+release, enable immutability, and rerun the same workflow. If an immutable
+release has already been rejected by MyWallpaper, the correction uses a new
+version/tag because GitHub prevents reuse of the locked tag.
+
+The caller uses the exact 40-character commit advertised by the protected
+`admission-v1` discovery branch, while the MyWallpaper backend trusts only that
+same workflow commit from an explicit SHA allowlist. Moving the public branch
+alone therefore neither changes executed code nor authorizes a revision.
+GitHub attributes reusable-workflow runner usage to this
+caller repository, so this add-on must itself remain public for standard hosted
+runner compute to be free and for artifact attestations to remain available
+without a GitHub Enterprise Cloud requirement. Actions transfer artifacts are
+retained for one day, but their storage still counts against the caller
+account's allowance and can be metered beyond it. Publishing only the toolchain
+repository does not change that attribution. MyWallpaper does not count one
+paid “unit” per add-on creation or publication in this flow; the only variable
+cost here is the caller's actual GitHub usage under its plan.
+
 ## Security and network behavior
 
 This hook executes inside Explorer on MyWallpaper's `windows-shell-v1` surface

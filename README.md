@@ -101,7 +101,7 @@ hook. They do not restart Explorer, a companion process or the Canvas layer.
 
 ## Publishing
 
-Pushing a newly-created SemVer tag such as `v4.0.13` triggers the public
+Pushing a newly-created SemVer tag such as `v4.0.14` triggers the public
 MyWallpaper `admission-v1` workflow pinned by its exact reviewed commit SHA.
 The repository must have GitHub release immutability enabled once in its
 settings. The workflow creates a draft, attaches deterministic 1 GiB
@@ -115,8 +115,8 @@ GitHub-hosted Ubuntu publisher attests the exact release ZIP through
 GitHub/Sigstore and uses a separate finalizer OIDC token for native evidence.
 
 ```bash
-git tag v4.0.13
-git push origin v4.0.13
+git tag v4.0.14
+git push origin v4.0.14
 ```
 
 An exact rerun reuses only the same draft or already immutable release and the

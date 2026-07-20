@@ -21,6 +21,6 @@ jobs:
       id-token: write
     # The public promotion branch is discovery-only. Execution is pinned to the
     # exact commit that MyWallpaper independently allowlists server-side.
-    uses: MyWallpapers/native-addon-toolchain/.github/workflows/native-addon-build.yml@65c96ef1723ed8146ff2e25c1ab24e568968b063
+    uses: MyWallpapers/native-addon-toolchain/.github/workflows/native-addon-build.yml@7034cb194d4366ccfd6eaf8d20e60baf845dc818
     with:
       channel: development

@@ -2,7 +2,7 @@
   "runtime": "canvas-v1",
   "name": "Taskbar Accent",
   "description": "Styles every Windows 11 taskbar with deep XAML themes, simple appearance controls and the official MyWallpaper native runtime.",
-  "version": "4.0.15",
+  "version": "4.1.0",
   "entry": "dist/index.html",
   "thumbnail": "assets/thumbnail.png",
   "deviceSettingsVersion": "1",
@@ -20,6 +20,7 @@
       "type": "boolean",
       "label": "Enable taskbar accent",
       "description": "Controls every Taskbar Accent instance on this device.",
+      "parent": "generalSection",
       "scope": "device",
       "default": true
     },
@@ -33,6 +34,7 @@
       "type": "select",
       "label": "Theme",
       "description": "Choose the simple MyWallpaper controls, no preset for advanced-only styling, or one of the integrated Taskbar Styler themes.",
+      "parent": "appearanceSection",
       "scope": "device",
       "default": "mywallpaper-quick",
       "options": [
@@ -79,9 +81,17 @@
       ]
     },
     {
+      "id": "surfaceSection",
+      "type": "section",
+      "label": "Surface",
+      "parent": "appearanceSection",
+      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+    },
+    {
       "id": "mode",
       "type": "select",
       "label": "Taskbar mode",
+      "parent": "surfaceSection",
       "scope": "device",
       "default": "blur",
       "showIf": { "setting": "theme", "equals": "mywallpaper-quick" },
@@ -96,6 +106,7 @@
       "id": "accentColor",
       "type": "color",
       "label": "Accent color",
+      "parent": "surfaceSection",
       "scope": "device",
       "default": "#1f8fff",
       "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
@@ -105,6 +116,7 @@
       "type": "range",
       "label": "Tint opacity",
       "description": "Controls the quick mode tint while preserving blur and acrylic material effects.",
+      "parent": "surfaceSection",
       "scope": "device",
       "default": 128,
       "min": 0,
@@ -117,10 +129,82 @@
       "type": "range",
       "label": "Blur amount",
       "description": "Controls the WindhawkBlur radius used by the quick Blur and Acrylic modes.",
+      "parent": "surfaceSection",
       "scope": "device",
       "default": 18,
       "min": 0,
       "max": 100,
+      "step": 1,
+      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+    },
+    {
+      "id": "layoutSection",
+      "type": "section",
+      "label": "Layout",
+      "description": "Safe geometry controls that keep the taskbar inside its Windows-owned surface.",
+      "parent": "appearanceSection",
+      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+    },
+    {
+      "id": "layout",
+      "type": "select",
+      "label": "Shape",
+      "parent": "layoutSection",
+      "scope": "device",
+      "default": "full",
+      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" },
+      "options": [
+        { "label": "Full width", "value": "full" },
+        { "label": "Floating dock", "value": "floating" }
+      ]
+    },
+    {
+      "id": "horizontalInset",
+      "type": "range",
+      "label": "Horizontal inset",
+      "description": "Space on both sides of the floating dock.",
+      "parent": "layoutSection",
+      "scope": "device",
+      "default": 250,
+      "min": 0,
+      "max": 600,
+      "step": 1,
+      "showIf": { "setting": "layout", "equals": "floating" }
+    },
+    {
+      "id": "bottomInset",
+      "type": "range",
+      "label": "Bottom inset",
+      "parent": "layoutSection",
+      "scope": "device",
+      "default": 0,
+      "min": 0,
+      "max": 16,
+      "step": 1,
+      "showIf": { "setting": "layout", "equals": "floating" }
+    },
+    {
+      "id": "cornerRadius",
+      "type": "range",
+      "label": "Corner radius",
+      "parent": "layoutSection",
+      "scope": "device",
+      "default": 12,
+      "min": 0,
+      "max": 32,
+      "step": 1,
+      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+    },
+    {
+      "id": "contentPadding",
+      "type": "range",
+      "label": "Content padding",
+      "description": "Adds balanced space around the taskbar buttons without resizing the Windows taskbar window.",
+      "parent": "layoutSection",
+      "scope": "device",
+      "default": 6,
+      "min": 0,
+      "max": 24,
       "step": 1,
       "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
     },
@@ -134,6 +218,7 @@
       "type": "textarea",
       "label": "Style constants",
       "description": "One name=value entry per line. Values override constants exposed by the selected theme.",
+      "parent": "themeCustomizationSection",
       "scope": "device",
       "default": ""
     },
@@ -147,6 +232,7 @@
       "type": "textarea",
       "label": "Control styles (JSON)",
       "description": "A JSON array of objects shaped as {\"target\":\"...\",\"styles\":[\"Property=Value\"]}. These rules are applied after the selected theme.",
+      "parent": "advancedSection",
       "scope": "device",
       "default": "[]"
     },
@@ -155,6 +241,7 @@
       "type": "textarea",
       "label": "Resource variables",
       "description": "One Key=Value, Key@Dark=Value or Key@Light=Value entry per line.",
+      "parent": "advancedSection",
       "scope": "device",
       "default": ""
     },
@@ -163,6 +250,7 @@
       "type": "select",
       "label": "Other XAML diagnostics consumers",
       "description": "Windows permits only one XAML diagnostics consumer. Alert asks before blocking; Block protects this add-on; Allow may let the other tool replace it.",
+      "parent": "advancedSection",
       "scope": "device",
       "default": "alert",
       "options": [

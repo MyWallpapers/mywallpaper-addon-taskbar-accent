@@ -4,7 +4,7 @@ export type JsonValue = JsonPrimitive | JsonValue[] | {
 	[key: string]: JsonValue;
 };
 export type RuntimeSurface = "interface" | "wallpaper";
-export type RuntimeMode = "live" | "preview" | "thumbnail";
+export type RuntimeMode = "interactive" | "thumbnail";
 export type RuntimeInstance = {
 	instanceId: string;
 	displayIndex: number;
@@ -14,12 +14,6 @@ export type RuntimeInstance = {
 	height: number;
 };
 type ResourceValue = {
-	"kind": "pinned";
-	digest: string;
-	name: string;
-	mediaType?: string;
-	sizeBytes: number;
-} | {
 	"kind": "live";
 	url: string;
 };
@@ -110,6 +104,7 @@ export interface CanvasLayerApi {
 	readonly lifecycle: LayerLifecycleApi;
 	readonly resources: LayerResourcesApi;
 	readonly bus: CanvasBus;
+	/** Native attachment owned by this exact layer; it cannot address another add-on. */
 	readonly native: LayerNativeApi;
 }
 /** Explicit capability object passed only to an add-on's exported `mount`. */

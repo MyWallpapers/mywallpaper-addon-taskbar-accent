@@ -224,7 +224,12 @@ std::wstring WithAlpha(std::wstring_view rgb, int alpha) {
 std::vector<ControlStyle> BuildQuickStyles(std::wstring_view mode,
                                            std::wstring_view color,
                                            int opacity,
-                                           int blurAmount) {
+                                           int blurAmount,
+                                           std::wstring_view layout,
+                                           int horizontalInset,
+                                           int bottomInset,
+                                           int cornerRadius,
+                                           int contentPadding) {
     const double opacityRatio = static_cast<double>(opacity) / 255.0;
     const std::wstring ratio = FormatRatio(opacityRatio);
     const std::wstring colorWithAlpha = WithAlpha(color, opacity);
@@ -261,7 +266,7 @@ std::vector<ControlStyle> BuildQuickStyles(std::wstring_view mode,
         L"Fill:=<SolidColorBrush Color=\"#00000000\" />",
     };
 
-    return {
+    std::vector<ControlStyle> styles = {
         {L"Taskbar.TaskbarFrame > Grid#RootGrid", {clearBackground}},
         {L"Taskbar.TaskbarBackground#BackgroundControl", {clearBackground}},
         {L"Taskbar.TaskbarBackground#BackgroundControl > Grid",
@@ -287,6 +292,23 @@ std::vector<ControlStyle> BuildQuickStyles(std::wstring_view mode,
          L"Grid > Rectangle#BackgroundStroke",
          strokeStyles},
     };
+
+    styles.push_back({
+        L"Taskbar.TaskbarFrame > Grid#RootGrid",
+        {L"Padding=" + std::to_wstring(contentPadding) + L",0," +
+             std::to_wstring(contentPadding) + L",0",
+         L"CornerRadius=" + std::to_wstring(cornerRadius)},
+    });
+    if (layout == L"floating") {
+        styles.push_back({
+            L"Taskbar.TaskbarFrame",
+            {L"Width=Auto", L"HorizontalAlignment=Center",
+             L"Margin=" + std::to_wstring(horizontalInset) + L",0," +
+                 std::to_wstring(horizontalInset) + L"," +
+                 std::to_wstring(bottomInset)},
+        });
+    }
+    return styles;
 }
 
 std::vector<ControlStyle> ParseControlStyles(std::wstring_view json) {
@@ -380,16 +402,39 @@ Projection ParseProjection() {
             ReadString(root, L"accentColor", L"#1f8fff");
         const double opacityValue = ReadNumber(root, L"opacity", 128);
         const double blurValue = ReadNumber(root, L"blurAmount", 18);
+        const std::wstring layout = ReadString(root, L"layout", L"full");
+        const double horizontalInsetValue =
+            ReadNumber(root, L"horizontalInset", 250);
+        const double bottomInsetValue = ReadNumber(root, L"bottomInset", 0);
+        const double cornerRadiusValue = ReadNumber(root, L"cornerRadius", 12);
+        const double contentPaddingValue = ReadNumber(root, L"contentPadding", 6);
         if (!IsRgbColor(color) || !std::isfinite(opacityValue) ||
             std::trunc(opacityValue) != opacityValue || opacityValue < 0 ||
             opacityValue > 255 || !std::isfinite(blurValue) ||
             std::trunc(blurValue) != blurValue || blurValue < 0 ||
-            blurValue > 100) {
+            blurValue > 100 ||
+            (layout != L"full" && layout != L"floating") ||
+            !std::isfinite(horizontalInsetValue) ||
+            std::trunc(horizontalInsetValue) != horizontalInsetValue ||
+            horizontalInsetValue < 0 || horizontalInsetValue > 600 ||
+            !std::isfinite(bottomInsetValue) ||
+            std::trunc(bottomInsetValue) != bottomInsetValue ||
+            bottomInsetValue < 0 || bottomInsetValue > 16 ||
+            !std::isfinite(cornerRadiusValue) ||
+            std::trunc(cornerRadiusValue) != cornerRadiusValue ||
+            cornerRadiusValue < 0 || cornerRadiusValue > 32 ||
+            !std::isfinite(contentPaddingValue) ||
+            std::trunc(contentPaddingValue) != contentPaddingValue ||
+            contentPaddingValue < 0 || contentPaddingValue > 24) {
             throw std::runtime_error("invalid quick appearance value");
         }
         result.controlStyles = BuildQuickStyles(
             mode, color, static_cast<int>(opacityValue),
-            static_cast<int>(blurValue));
+            static_cast<int>(blurValue), layout,
+            static_cast<int>(horizontalInsetValue),
+            static_cast<int>(bottomInsetValue),
+            static_cast<int>(cornerRadiusValue),
+            static_cast<int>(contentPaddingValue));
     }
 
     auto advanced = ParseControlStyles(

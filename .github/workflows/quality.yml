@@ -44,7 +44,7 @@ jobs:
         run: pnpm test
 
   native:
-    name: native-x64-and-arm64
+    name: native-x64
     runs-on: windows-2025
     timeout-minutes: 30
     steps:
@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: MyWallpapers/native-addon-toolchain
-          ref: fce289da71538f7292bd9324b4f02e8ea469cea8
+          ref: d25e283c8bffc524fcb7334b59a402b2eda95891
           path: toolchain
           persist-credentials: false
 
@@ -74,7 +74,7 @@ jobs:
             -ArtifactRoot toolchain/.github/canonical-cli `
             -Destination "$env:RUNNER_TEMP/mywallpaper-cli"
 
-      - name: Generate bindings and compile both hook architectures
+      - name: Generate bindings and compile the x64 hook
         shell: pwsh
         run: |
           Remove-Item -LiteralPath addon/native/generated -Recurse -Force -ErrorAction SilentlyContinue

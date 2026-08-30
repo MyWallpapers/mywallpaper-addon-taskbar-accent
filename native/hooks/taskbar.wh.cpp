@@ -14,6 +14,7 @@
 // @author          MyWallpaper
 // @github          https://github.com/MyWallpapers/mywallpaper-addon-taskbar-accent
 // @include         explorer.exe
+// @architecture    x86-64
 // @compilerOptions -lcomctl32 -lole32 -lruntimeobject -Wl,--export-all-symbols
 // ==/WindhawkMod==
 
@@ -38,13 +39,8 @@
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Data.Json.h>
 
-#include <mywallpaper_settings.hpp>
-#include <mywallpaper_windhawk.hpp>
 #include <windhawk_utils.h>
 
-HRESULT MyWallpaperTaskbarStylerEngineResult() noexcept;
-bool MyWallpaperTaskbarStylerHasAppliedCustomization() noexcept;
-bool MyWallpaperTaskbarStylerUserSettingsHadError() noexcept;
 void MyWallpaperTaskbarStylerResetUserSettingsError() noexcept;
 void MyWallpaperTaskbarStylerNotifyWatcherResult(HRESULT result) noexcept;
 void MyWallpaperTaskbarStylerNotifyCustomizationApplied() noexcept;
@@ -175,34 +171,6 @@ std::wstring ReadString(const JsonObject& object,
         throw std::runtime_error("expected a JSON string");
     }
     return std::wstring(value.GetString());
-}
-
-bool ReadBoolean(const JsonObject& object,
-                 std::wstring_view key,
-                 bool fallback) {
-    const winrt::hstring hkey(key);
-    if (!object.HasKey(hkey)) {
-        return fallback;
-    }
-    const auto value = object.GetNamedValue(hkey);
-    if (value.ValueType() != JsonValueType::Boolean) {
-        throw std::runtime_error("expected a JSON boolean");
-    }
-    return value.GetBoolean();
-}
-
-double ReadNumber(const JsonObject& object,
-                  std::wstring_view key,
-                  double fallback) {
-    const winrt::hstring hkey(key);
-    if (!object.HasKey(hkey)) {
-        return fallback;
-    }
-    const auto value = object.GetNamedValue(hkey);
-    if (value.ValueType() != JsonValueType::Number) {
-        throw std::runtime_error("expected a JSON number");
-    }
-    return value.GetNumber();
 }
 
 bool IsRgbColor(std::wstring_view color) {
@@ -367,12 +335,20 @@ std::vector<ControlStyle> ParseControlStyles(std::wstring_view json) {
     return result;
 }
 
-Projection ParseProjection() {
-    const JsonObject root = JsonObject::Parse(
-        winrt::to_hstring(mywallpaper::settings::json()));
+std::wstring ReadWindhawkStringSetting(PCWSTR key,
+                                       std::wstring_view fallback = L"") {
+    PCWSTR value = Wh_GetStringSetting(key);
+    if (!value) {
+        return std::wstring(fallback);
+    }
+    std::wstring result(value);
+    Wh_FreeStringSetting(value);
+    return result;
+}
 
+Projection ParseProjection() {
     Projection result;
-    result.enabled = ReadBoolean(root, L"enabled", true);
+    result.enabled = Wh_GetIntSetting(L"enabled") != 0;
     if (!result.enabled) {
         // Disabling must remain possible even while an advanced editor contains
         // an incomplete theme or JSON document. The upstream engine only needs
@@ -383,7 +359,7 @@ Projection ParseProjection() {
     }
 
     const std::wstring selectedTheme =
-        ReadString(root, L"theme", kQuickTheme);
+        ReadWindhawkStringSetting(L"theme", kQuickTheme);
     if (!IsAllowedTheme(selectedTheme)) {
         throw std::runtime_error("unknown taskbar theme");
     }
@@ -391,7 +367,7 @@ Projection ParseProjection() {
     result.theme = result.quickAppearance ? L"" : selectedTheme;
 
     result.diagnosticsHandling =
-        ReadString(root, L"xamlDiagnosticsHandling", L"alert");
+        ReadWindhawkStringSetting(L"xamlDiagnosticsHandling", L"alert");
     if (result.diagnosticsHandling != L"alert" &&
         result.diagnosticsHandling != L"block" &&
         result.diagnosticsHandling != L"allow") {
@@ -399,57 +375,44 @@ Projection ParseProjection() {
     }
 
     result.styleConstants = SplitNonEmptyLines(
-        ReadString(root, L"styleConstants", L""));
+        ReadWindhawkStringSetting(L"styleConstants"));
     result.resourceVariables = SplitNonEmptyLines(
-        ReadString(root, L"themeResourceVariables", L""));
+        ReadWindhawkStringSetting(L"themeResourceVariables"));
 
     if (result.quickAppearance) {
-        const std::wstring mode = ReadString(root, L"mode", L"blur");
+        const std::wstring mode = ReadWindhawkStringSetting(L"mode", L"blur");
         if (mode != L"blur" && mode != L"acrylic" &&
             mode != L"transparent" && mode != L"accent") {
             throw std::runtime_error("unknown quick appearance mode");
         }
         const std::wstring color =
-            ReadString(root, L"accentColor", L"#1f8fff");
-        const double opacityValue = ReadNumber(root, L"opacity", 128);
-        const double blurValue = ReadNumber(root, L"blurAmount", 18);
-        const std::wstring layout = ReadString(root, L"layout", L"full");
-        const double horizontalInsetValue =
-            ReadNumber(root, L"horizontalInset", 250);
-        const double bottomInsetValue = ReadNumber(root, L"bottomInset", 0);
-        const double cornerRadiusValue = ReadNumber(root, L"cornerRadius", 12);
-        const double contentPaddingValue = ReadNumber(root, L"contentPadding", 6);
+            ReadWindhawkStringSetting(L"accentColor", L"#1f8fff");
+        const int opacityValue = Wh_GetIntSetting(L"opacity");
+        const int blurValue = Wh_GetIntSetting(L"blurAmount");
+        const std::wstring layout = ReadWindhawkStringSetting(L"layout", L"full");
+        const int horizontalInsetValue = Wh_GetIntSetting(L"horizontalInset");
+        const int bottomInsetValue = Wh_GetIntSetting(L"bottomInset");
+        const int cornerRadiusValue = Wh_GetIntSetting(L"cornerRadius");
+        const int contentPaddingValue = Wh_GetIntSetting(L"contentPadding");
         if (!IsRgbColor(color) || !std::isfinite(opacityValue) ||
-            std::trunc(opacityValue) != opacityValue || opacityValue < 0 ||
+            opacityValue < 0 ||
             opacityValue > 255 || !std::isfinite(blurValue) ||
-            std::trunc(blurValue) != blurValue || blurValue < 0 ||
+            blurValue < 0 ||
             blurValue > 100 ||
             (layout != L"full" && layout != L"floating") ||
-            !std::isfinite(horizontalInsetValue) ||
-            std::trunc(horizontalInsetValue) != horizontalInsetValue ||
             horizontalInsetValue < 0 || horizontalInsetValue > 600 ||
-            !std::isfinite(bottomInsetValue) ||
-            std::trunc(bottomInsetValue) != bottomInsetValue ||
             bottomInsetValue < 0 || bottomInsetValue > 16 ||
-            !std::isfinite(cornerRadiusValue) ||
-            std::trunc(cornerRadiusValue) != cornerRadiusValue ||
             cornerRadiusValue < 0 || cornerRadiusValue > 32 ||
-            !std::isfinite(contentPaddingValue) ||
-            std::trunc(contentPaddingValue) != contentPaddingValue ||
             contentPaddingValue < 0 || contentPaddingValue > 24) {
             throw std::runtime_error("invalid quick appearance value");
         }
         result.controlStyles = BuildQuickStyles(
-            mode, color, static_cast<int>(opacityValue),
-            static_cast<int>(blurValue), layout,
-            static_cast<int>(horizontalInsetValue),
-            static_cast<int>(bottomInsetValue),
-            static_cast<int>(cornerRadiusValue),
-            static_cast<int>(contentPaddingValue));
+            mode, color, opacityValue, blurValue, layout, horizontalInsetValue,
+            bottomInsetValue, cornerRadiusValue, contentPaddingValue);
     }
 
     auto advanced = ParseControlStyles(
-        ReadString(root, L"controlStyles", L"[]"));
+        ReadWindhawkStringSetting(L"controlStyles", L"[]"));
     result.controlStyles.insert(result.controlStyles.end(),
                                 std::make_move_iterator(advanced.begin()),
                                 std::make_move_iterator(advanced.end()));
@@ -506,11 +469,6 @@ ReloadResult ReloadPendingProjection() noexcept {
         g_settingsInvalid = true;
         return ReloadResult::Invalid;
     }
-}
-
-bool SettingsAreInvalid() {
-    std::lock_guard lock(g_projectionMutex);
-    return g_settingsInvalid;
 }
 
 std::shared_ptr<const Projection> AppliedProjection() {
@@ -617,48 +575,6 @@ std::wstring LookupProjectedSetting(std::wstring_view key) {
     return L"";
 }
 
-void EmitInvalidSettings() {
-    mywallpaper::windhawk::emit_event(
-        "mywallpaper.taskbar-accent/v1/invalid-settings",
-        R"({"cause":"Taskbar Accent received an invalid theme or advanced XAML document.","action":"Correct the highlighted add-on settings; the last valid appearance remains active."})");
-}
-
-void EmitCurrentState(const std::shared_ptr<const Projection>& projection) {
-    if (projection && projection->enabled) {
-        if (MyWallpaperTaskbarStylerUserSettingsHadError()) {
-            mywallpaper::windhawk::emit_event(
-                "mywallpaper.taskbar-accent/v1/advanced-style-errors",
-                R"({"cause":"One or more custom XAML rules could not be parsed or applied.","action":"Review the advanced control styles and resource variables; the compatible theme rules remain active."})");
-            return;
-        }
-        const HRESULT engineResult = MyWallpaperTaskbarStylerEngineResult();
-        if (engineResult == E_PENDING) {
-            // AdviseVisualTreeChange runs asynchronously. No status is emitted
-            // until the watcher has either attached or failed explicitly.
-            return;
-        }
-        if (FAILED(engineResult)) {
-            mywallpaper::windhawk::emit_event(
-                "mywallpaper.taskbar-accent/v1/engine-unavailable",
-                R"({"cause":"Taskbar Styler could not attach to Windows XAML diagnostics.","action":"Close another taskbar styling tool or choose the appropriate XAML diagnostics handling mode."})");
-            return;
-        }
-        if (!MyWallpaperTaskbarStylerHasAppliedCustomization()) {
-            // AdviseVisualTreeChange succeeded, but the watcher hasn't yet
-            // applied a matching rule. Its first successful customization
-            // will emit the durable applied state from the callback thread.
-            return;
-        }
-        mywallpaper::windhawk::emit_event(
-            "mywallpaper.taskbar-accent/v1/applied",
-            R"({"state":"active","engine":"windows-11-taskbar-styler-1.7"})");
-    } else {
-        mywallpaper::windhawk::emit_event(
-            "mywallpaper.taskbar-accent/v1/disabled",
-            R"({"state":"disabled"})");
-    }
-}
-
 }  // namespace mywallpaper_taskbar_styler
 
 bool MyWallpaperTaskbarStylerProjectionEnabled() noexcept {
@@ -721,19 +637,6 @@ void MyWallpaperTaskbarStylerFreeStringSetting(PCWSTR value) noexcept {
 #undef Wh_GetStringSetting
 #undef MYWALLPAPER_DISABLE_UPSTREAM_STATISTICS
 
-HRESULT MyWallpaperTaskbarStylerEngineResult() noexcept {
-    return g_mywallpaperLastTapResult.load(std::memory_order_acquire);
-}
-
-bool MyWallpaperTaskbarStylerUserSettingsHadError() noexcept {
-    return g_mywallpaperUserSettingsHadError.load(std::memory_order_acquire);
-}
-
-bool MyWallpaperTaskbarStylerHasAppliedCustomization() noexcept {
-    return g_mywallpaperAppliedAtLeastOneCustomization.load(
-        std::memory_order_acquire);
-}
-
 void MyWallpaperTaskbarStylerResetUserSettingsError() noexcept {
     g_mywallpaperUserSettingsHadError.store(false,
                                              std::memory_order_release);
@@ -744,22 +647,8 @@ namespace {
 constexpr LONGLONG kSettingsDebounce100ns = 250LL * 10'000LL;
 
 std::mutex g_upstreamLifecycleMutex;
-std::mutex g_eventEmissionMutex;
 PTP_TIMER g_settingsReloadTimer = nullptr;
 bool g_upstreamUnloading = false;
-std::atomic_bool g_upstreamEventsEnabled = false;
-std::atomic_bool g_upstreamApplyInProgress = false;
-
-class ScopedUpstreamApplyPhase {
-   public:
-    ScopedUpstreamApplyPhase() noexcept {
-        g_upstreamApplyInProgress.store(true, std::memory_order_release);
-    }
-
-    ~ScopedUpstreamApplyPhase() {
-        g_upstreamApplyInProgress.store(false, std::memory_order_release);
-    }
-};
 
 class ScopedMultithreadedApartment {
    public:
@@ -776,34 +665,21 @@ class ScopedMultithreadedApartment {
     HRESULT result_;
 };
 
-void EmitCurrentStateIfEnabled(
-    const std::shared_ptr<const mywallpaper_taskbar_styler::Projection>&
-        projection) noexcept;
-
 void ApplyProjectedSettings() {
-    std::shared_ptr<const mywallpaper_taskbar_styler::Projection> applied;
     {
         std::lock_guard lock(g_upstreamLifecycleMutex);
         if (g_upstreamUnloading) {
             return;
         }
-        applied =
-            mywallpaper_taskbar_styler::PromotePendingProjection();
-        if (!applied) {
+        if (!mywallpaper_taskbar_styler::PromotePendingProjection()) {
             return;
         }
         // Thread-pool callbacks don't guarantee a COM apartment. The imported
         // engine talks to XAML diagnostics and is safe to enter from either an
         // existing apartment or this temporary MTA.
         ScopedMultithreadedApartment apartment;
-        ScopedUpstreamApplyPhase applyPhase;
         MyWallpaperTaskbarStylerResetUserSettingsError();
         UpstreamTaskbarStylerSettingsChanged();
-    }
-    // Native events use a synchronous pipe and must never hold the lifecycle
-    // lock needed by another apply or by module unload.
-    if (!mywallpaper_taskbar_styler::SettingsAreInvalid()) {
-        EmitCurrentStateIfEnabled(applied);
     }
 }
 
@@ -828,81 +704,35 @@ bool ScheduleProjectedSettings() {
     return true;
 }
 
-void EmitCurrentStateFromCallbackNoexcept() noexcept {
-    try {
-        std::lock_guard emissionLock(g_eventEmissionMutex);
-        if (!g_upstreamEventsEnabled.load(std::memory_order_acquire)) {
-            return;
-        }
-        mywallpaper_taskbar_styler::EmitCurrentState(
-            mywallpaper_taskbar_styler::AppliedProjection());
-    } catch (...) {
-        // These callbacks execute inside Explorer. A diagnostic allocation or
-        // pipe failure must never escape a noexcept boundary and terminate it.
-        Wh_Log(L"Taskbar Accent couldn't emit its runtime state");
-    }
-}
-
-void EmitCurrentStateIfEnabled(
-    const std::shared_ptr<const mywallpaper_taskbar_styler::Projection>&
-        projection) noexcept {
-    try {
-        std::lock_guard emissionLock(g_eventEmissionMutex);
-        if (!g_upstreamEventsEnabled.load(std::memory_order_acquire)) {
-            return;
-        }
-        mywallpaper_taskbar_styler::EmitCurrentState(projection);
-    } catch (...) {
-        Wh_Log(L"Taskbar Accent couldn't emit its runtime state");
-    }
-}
-
-void DisableRuntimeEventsAndWait() noexcept {
-    std::lock_guard emissionLock(g_eventEmissionMutex);
-    g_upstreamEventsEnabled.store(false, std::memory_order_release);
-}
-
 }  // namespace
 
 void MyWallpaperTaskbarStylerNotifyWatcherResult(HRESULT result) noexcept {
-    if (!g_upstreamEventsEnabled.load(std::memory_order_acquire)) {
-        return;
-    }
     g_mywallpaperLastTapResult.store(result, std::memory_order_release);
-    if (!g_upstreamApplyInProgress.load(std::memory_order_acquire)) {
-        EmitCurrentStateFromCallbackNoexcept();
+    if (FAILED(result)) {
+        Wh_Log(L"Taskbar Accent XAML diagnostics watcher failed: 0x%08X",
+               static_cast<unsigned>(result));
     }
 }
 
 void MyWallpaperTaskbarStylerNotifyCustomizationApplied() noexcept {
-    if (!g_upstreamEventsEnabled.load(std::memory_order_acquire) ||
-        g_upstreamApplyInProgress.load(std::memory_order_acquire)) {
-        return;
-    }
-    EmitCurrentStateFromCallbackNoexcept();
+    Wh_Log(L"Taskbar Accent customization applied");
 }
 
 void MyWallpaperTaskbarStylerNotifyUserSettingsError() noexcept {
-    if (!g_upstreamEventsEnabled.load(std::memory_order_acquire) ||
-        g_upstreamApplyInProgress.load(std::memory_order_acquire)) {
-        return;
-    }
-    EmitCurrentStateFromCallbackNoexcept();
+    Wh_Log(L"Taskbar Accent settings could not be applied");
 }
 
 BOOL Wh_ModInit() {
     const auto reload = mywallpaper_taskbar_styler::InitializeProjection();
     if (reload == mywallpaper_taskbar_styler::ReloadResult::Invalid) {
-        mywallpaper_taskbar_styler::EmitInvalidSettings();
+        Wh_Log(L"Taskbar Accent received invalid settings; module disabled");
         return FALSE;
     }
     {
         std::lock_guard lock(g_upstreamLifecycleMutex);
         g_upstreamUnloading = false;
     }
-    g_upstreamEventsEnabled.store(true, std::memory_order_release);
     if (!UpstreamTaskbarStylerModInit()) {
-        DisableRuntimeEventsAndWait();
         return FALSE;
     }
     g_settingsReloadTimer = CreateThreadpoolTimer(
@@ -915,33 +745,27 @@ BOOL Wh_ModInit() {
 }
 
 void Wh_ModAfterInit() {
-    std::shared_ptr<const mywallpaper_taskbar_styler::Projection> applied;
     {
         std::lock_guard lock(g_upstreamLifecycleMutex);
         if (g_upstreamUnloading) {
             return;
         }
-        ScopedUpstreamApplyPhase applyPhase;
         MyWallpaperTaskbarStylerResetUserSettingsError();
         UpstreamTaskbarStylerAfterInit();
-        applied = mywallpaper_taskbar_styler::AppliedProjection();
     }
-    EmitCurrentStateIfEnabled(applied);
 }
 
 void Wh_ModSettingsChanged() {
     const auto reload =
         mywallpaper_taskbar_styler::ReloadPendingProjection();
     if (reload == mywallpaper_taskbar_styler::ReloadResult::Invalid) {
-        mywallpaper_taskbar_styler::EmitInvalidSettings();
+        Wh_Log(L"Taskbar Accent received invalid settings; keeping last valid projection");
         return;
     }
     if (reload == mywallpaper_taskbar_styler::ReloadResult::Unchanged) {
         return;
     }
     if (reload == mywallpaper_taskbar_styler::ReloadResult::Recovered) {
-        EmitCurrentStateIfEnabled(
-            mywallpaper_taskbar_styler::AppliedProjection());
         return;
     }
     if (!ScheduleProjectedSettings()) {
@@ -950,9 +774,6 @@ void Wh_ModSettingsChanged() {
 }
 
 void Wh_ModUninit() {
-    // Stop new events and wait for any synchronous pipe emission already in
-    // flight before tearing down the XAML watcher and its state.
-    DisableRuntimeEventsAndWait();
     {
         std::lock_guard lock(g_upstreamLifecycleMutex);
         g_upstreamUnloading = true;

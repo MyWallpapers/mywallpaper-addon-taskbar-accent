@@ -101,19 +101,36 @@ invariant(
   wrapper.includes('ReloadResult::Recovered') &&
     wrapper.includes('g_settingsInvalid') &&
     wrapper.includes('g_pendingProjection.reset()') &&
-    wrapper.includes('SettingsAreInvalid()'),
-  'recovering the last valid settings must clear the degraded UI state',
+    !wrapper.includes('SettingsAreInvalid()'),
+  'recovering settings must keep one explicit pending/applied projection state',
+)
+invariant(
+  wrapper.includes('Wh_GetIntSetting(L"enabled")') &&
+    wrapper.includes('Wh_GetStringSetting') &&
+    wrapper.includes('Wh_FreeStringSetting'),
+  'projection settings must use the official Windhawk settings API',
+)
+invariant(
+  !wrapper.includes('mywallpaper::') &&
+    !wrapper.includes('mywallpaper_settings') &&
+    !wrapper.includes('mywallpaper_windhawk') &&
+    !wrapper.includes('windows-shell-v1') &&
+    !wrapper.includes('allowed_hooks') &&
+    !wrapper.includes('NativeAllowedHook'),
+  'the adapter must not recreate MyWallpaper hook restrictions or protocols',
+)
+invariant(
+  !wrapper.includes('emit_event') &&
+    !wrapper.includes('EmitCurrentState') &&
+    !wrapper.includes('g_eventEmissionMutex') &&
+    !wrapper.includes('g_upstreamEventsEnabled'),
+  'the adapter must not maintain a parallel MyWallpaper runtime event channel',
 )
 invariant(
   vendor.includes('g_mywallpaperUserSettingsHadError') &&
-    wrapper.includes('advanced-style-errors'),
-  'rejected user XAML rules must not be reported as fully applied',
-)
-invariant(
-  vendor.includes('MyWallpaperTaskbarStylerNotifyWatcherResult(hr)') &&
-    vendor.includes('g_mywallpaperAppliedAtLeastOneCustomization') &&
-    wrapper.includes('MyWallpaperTaskbarStylerHasAppliedCustomization()'),
-  'live status must require both the XAML watcher and a matching customization',
+    vendor.includes('MyWallpaperTaskbarStylerNotifyUserSettingsError()') &&
+    wrapper.includes('Wh_Log(L"Taskbar Accent settings could not be applied")'),
+  'native setting errors must remain visible through Windhawk diagnostics',
 )
 invariant(
   vendor.indexOf('AddRef();\n    m_adviseThread = CreateThread') >= 0 &&
@@ -126,20 +143,6 @@ invariant(
     vendor.indexOf('watcher->Release();') >
       vendor.indexOf('MyWallpaperTaskbarStylerNotifyWatcherResult(hr);'),
   'the XAML advise thread must convert interface failures and always release its callback reference',
-)
-const pendingStateBranch = wrapper.slice(
-  wrapper.indexOf('if (engineResult == E_PENDING)'),
-  wrapper.indexOf('if (FAILED(engineResult))'),
-)
-invariant(
-  !pendingStateBranch.includes('emit_event'),
-  'the normal asynchronous E_PENDING state must remain silent',
-)
-invariant(
-  wrapper.includes('g_eventEmissionMutex') &&
-    wrapper.includes('EmitCurrentStateFromCallbackNoexcept') &&
-    wrapper.includes('DisableRuntimeEventsAndWait();'),
-  'runtime event callbacks must be exception-safe and drained before teardown',
 )
 invariant(
   vendor.includes('bool userProvided') &&

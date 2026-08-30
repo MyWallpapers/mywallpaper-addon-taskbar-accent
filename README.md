@@ -143,8 +143,10 @@ cost here is the caller's actual GitHub usage under its plan.
 
 ## Security and network behavior
 
-This hook executes inside Explorer on MyWallpaper's `windows-shell-v1` surface
-after the normal native consent flow. It is not a sandbox.
+This hook executes in the Windows process targets declared by its official
+Windhawk metadata after the normal native consent flow. MyWallpaper does not
+rewrite the target, architecture, include/exclude directives, or compiler
+options, and the mod is not a sandbox.
 
 The theme-usage statistics present in upstream Taskbar Styler are compiled out
 of this add-on. Some optional integrated themes contain explicit image URLs to

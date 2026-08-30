@@ -6,6 +6,17 @@
 // remains in this GPL add-on and is never linked into MyWallpaper's proprietary
 // desktop binary.
 
+// ==WindhawkMod==
+// @id              mywallpaper-taskbar-accent
+// @name            MyWallpaper Taskbar Accent
+// @description     Apply configurable Windows taskbar styling through Windhawk.
+// @version         4.1.1
+// @author          MyWallpaper
+// @github          https://github.com/MyWallpapers/mywallpaper-addon-taskbar-accent
+// @include         explorer.exe
+// @compilerOptions -lcomctl32 -lole32 -lruntimeobject -Wl,--export-all-symbols
+// ==/WindhawkMod==
+
 #include <windows.h>
 
 #include <algorithm>

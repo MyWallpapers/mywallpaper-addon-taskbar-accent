@@ -23,29 +23,12 @@ export function mount({ layer, runtime }: CanvasAddonMountContext): () => void {
     }
     if (status.state === 'active') {
       renderStatus(
-        'starting',
-        'Native hook attached · waiting for confirmation from the Taskbar Styler XAML engine',
+        'active',
+        'Live · shared across every Windows taskbar',
       )
       return
     }
     renderStatus(status.state, `${status.cause} ${status.action}`)
-  })
-
-  const stopEvents = layer.native.hooks.onEvent((event) => {
-    if (event.hookId !== 'taskbar' || !event.topic.startsWith('mywallpaper.taskbar-accent/v1/')) return
-    if (event.topic === 'mywallpaper.taskbar-accent/v1/applied') {
-      renderStatus('active', 'Live · shared across every Windows taskbar')
-      return
-    }
-    if (event.topic === 'mywallpaper.taskbar-accent/v1/disabled') {
-      renderStatus('disabled', 'Disabled in Taskbar Accent settings')
-      return
-    }
-    const payload = isRecord(event.payload) ? event.payload : {}
-    const cause = payload['cause']
-    const action = payload['action']
-    if (typeof cause !== 'string' || typeof action !== 'string') return
-    renderStatus('degraded', `${cause} ${action}`)
   })
 
   function renderStatus(state: NativeHookStatus['state'] | 'starting', detail: string): void {
@@ -63,12 +46,7 @@ export function mount({ layer, runtime }: CanvasAddonMountContext): () => void {
     return element
   }
 
-  function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
-  }
-
   return () => {
     stopState()
-    stopEvents()
   }
 }

@@ -2,8 +2,8 @@
   "runtime": "canvas-native-v1",
   "name": "Taskbar Accent",
   "description": "Styles every Windows 11 taskbar with deep XAML themes, simple appearance controls and the official MyWallpaper native runtime.",
-  "version": "4.1.1",
-  "entry": "dist/index.html",
+  "version": "4.1.2",
+  "entry": "dist/assets/addon.js",
   "thumbnail": "assets/thumbnail.png",
   "deviceSettingsVersion": "1",
   "ui": {

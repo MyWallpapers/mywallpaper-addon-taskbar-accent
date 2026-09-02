@@ -10,7 +10,7 @@
 // @id              mywallpaper-taskbar-accent
 // @name            MyWallpaper Taskbar Accent
 // @description     Apply configurable Windows taskbar styling through Windhawk.
-// @version         4.1.1
+// @version         4.1.2
 // @author          MyWallpaper
 // @github          https://github.com/MyWallpapers/mywallpaper-addon-taskbar-accent
 // @include         explorer.exe

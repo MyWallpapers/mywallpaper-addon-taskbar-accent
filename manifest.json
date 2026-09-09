@@ -2,7 +2,7 @@
   "runtime": "canvas-native-v1",
   "name": "Taskbar Accent",
   "description": "Styles every Windows 11 taskbar with deep XAML themes, simple appearance controls and the official MyWallpaper native runtime.",
-  "version": "4.1.2",
+  "version": "4.1.3",
   "entry": "dist/assets/addon.js",
   "thumbnail": "assets/thumbnail.png",
   "deviceSettingsVersion": "1",
@@ -38,46 +38,166 @@
       "scope": "device",
       "default": "mywallpaper-quick",
       "options": [
-        { "label": "MyWallpaper quick appearance", "value": "mywallpaper-quick" },
-        { "label": "None (advanced styles only)", "value": "" },
-        { "label": "TranslucentTaskbar", "value": "TranslucentTaskbar" },
-        { "label": "DockLike", "value": "DockLike" },
-        { "label": "SimplyTransparent", "value": "SimplyTransparent" },
-        { "label": "Squircle", "value": "Squircle" },
-        { "label": "Matter", "value": "Matter" },
-        { "label": "WinXP", "value": "WinXP" },
-        { "label": "WinXP (Zune)", "value": "WinXP_variant_Zune" },
-        { "label": "Bubbles", "value": "Bubbles" },
-        { "label": "RosePine", "value": "RosePine" },
-        { "label": "WinVista", "value": "WinVista" },
-        { "label": "CleanSlate", "value": "CleanSlate" },
-        { "label": "Lucent (Accented Bar)", "value": "Lucent" },
-        { "label": "Lucent (Light Bar)", "value": "Lucent_variant_Light" },
-        { "label": "SunValley", "value": "SunValley" },
-        { "label": "SunValley (Legacy)", "value": "21996Taskbar" },
-        { "label": "BottomDensy", "value": "BottomDensy" },
-        { "label": "BottomDensy (NoInd)", "value": "BottomDensy_variant_NoInd" },
-        { "label": "TaskbarXII", "value": "TaskbarXII" },
-        { "label": "xdark", "value": "xdark" },
-        { "label": "Windows7", "value": "Windows7" },
-        { "label": "Aeris", "value": "Aeris" },
-        { "label": "Plasma", "value": "Plasma" },
-        { "label": "WindowGlass", "value": "WindowGlass" },
-        { "label": "WindowGlass (Split)", "value": "WindowGlass_variant_Split" },
-        { "label": "WindowGlass (Full-Length)", "value": "WindowGlass_variant_FullLength" },
-        { "label": "Surface", "value": "Surface" },
-        { "label": "Oversimplified & Accentuated", "value": "Oversimplified&Accentuated" },
-        { "label": "Luminosity (Dock)", "value": "Luminosity_variant_Dock" },
-        { "label": "Luminosity (Classic)", "value": "Luminosity_variant_Classic" },
-        { "label": "Luminosity (Compact)", "value": "Luminosity_variant_Compact" },
-        { "label": "LayerMicaUI", "value": "LayerMicaUI" },
-        { "label": "Fluid", "value": "Fluid" },
-        { "label": "TintedGlass", "value": "TintedGlass" },
-        { "label": "TaskbarToStatusbar", "value": "TaskbarToStatusbar" },
-        { "label": "UltraWideFriendly", "value": "UltraWideFriendly" },
-        { "label": "LiquidGlass", "value": "LiquidGlass" },
-        { "label": "LiquidGlass (Alternate)", "value": "LiquidGlass_variant_Alternate" },
-        { "label": "Borderless", "value": "Borderless" }
+        {
+          "label": "MyWallpaper quick appearance",
+          "value": "mywallpaper-quick"
+        },
+        {
+          "label": "None (advanced styles only)",
+          "value": ""
+        },
+        {
+          "label": "TranslucentTaskbar",
+          "value": "TranslucentTaskbar"
+        },
+        {
+          "label": "DockLike",
+          "value": "DockLike"
+        },
+        {
+          "label": "SimplyTransparent",
+          "value": "SimplyTransparent"
+        },
+        {
+          "label": "Squircle",
+          "value": "Squircle"
+        },
+        {
+          "label": "Matter",
+          "value": "Matter"
+        },
+        {
+          "label": "WinXP",
+          "value": "WinXP"
+        },
+        {
+          "label": "WinXP (Zune)",
+          "value": "WinXP_variant_Zune"
+        },
+        {
+          "label": "Bubbles",
+          "value": "Bubbles"
+        },
+        {
+          "label": "RosePine",
+          "value": "RosePine"
+        },
+        {
+          "label": "WinVista",
+          "value": "WinVista"
+        },
+        {
+          "label": "CleanSlate",
+          "value": "CleanSlate"
+        },
+        {
+          "label": "Lucent (Accented Bar)",
+          "value": "Lucent"
+        },
+        {
+          "label": "Lucent (Light Bar)",
+          "value": "Lucent_variant_Light"
+        },
+        {
+          "label": "SunValley",
+          "value": "SunValley"
+        },
+        {
+          "label": "SunValley (Legacy)",
+          "value": "21996Taskbar"
+        },
+        {
+          "label": "BottomDensy",
+          "value": "BottomDensy"
+        },
+        {
+          "label": "BottomDensy (NoInd)",
+          "value": "BottomDensy_variant_NoInd"
+        },
+        {
+          "label": "TaskbarXII",
+          "value": "TaskbarXII"
+        },
+        {
+          "label": "xdark",
+          "value": "xdark"
+        },
+        {
+          "label": "Windows7",
+          "value": "Windows7"
+        },
+        {
+          "label": "Aeris",
+          "value": "Aeris"
+        },
+        {
+          "label": "Plasma",
+          "value": "Plasma"
+        },
+        {
+          "label": "WindowGlass",
+          "value": "WindowGlass"
+        },
+        {
+          "label": "WindowGlass (Split)",
+          "value": "WindowGlass_variant_Split"
+        },
+        {
+          "label": "WindowGlass (Full-Length)",
+          "value": "WindowGlass_variant_FullLength"
+        },
+        {
+          "label": "Surface",
+          "value": "Surface"
+        },
+        {
+          "label": "Oversimplified & Accentuated",
+          "value": "Oversimplified&Accentuated"
+        },
+        {
+          "label": "Luminosity (Dock)",
+          "value": "Luminosity_variant_Dock"
+        },
+        {
+          "label": "Luminosity (Classic)",
+          "value": "Luminosity_variant_Classic"
+        },
+        {
+          "label": "Luminosity (Compact)",
+          "value": "Luminosity_variant_Compact"
+        },
+        {
+          "label": "LayerMicaUI",
+          "value": "LayerMicaUI"
+        },
+        {
+          "label": "Fluid",
+          "value": "Fluid"
+        },
+        {
+          "label": "TintedGlass",
+          "value": "TintedGlass"
+        },
+        {
+          "label": "TaskbarToStatusbar",
+          "value": "TaskbarToStatusbar"
+        },
+        {
+          "label": "UltraWideFriendly",
+          "value": "UltraWideFriendly"
+        },
+        {
+          "label": "LiquidGlass",
+          "value": "LiquidGlass"
+        },
+        {
+          "label": "LiquidGlass (Alternate)",
+          "value": "LiquidGlass_variant_Alternate"
+        },
+        {
+          "label": "Borderless",
+          "value": "Borderless"
+        }
       ]
     },
     {
@@ -85,7 +205,10 @@
       "type": "section",
       "label": "Surface",
       "parent": "appearanceSection",
-      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+      "showIf": {
+        "setting": "theme",
+        "equals": "mywallpaper-quick"
+      }
     },
     {
       "id": "mode",
@@ -94,12 +217,27 @@
       "parent": "surfaceSection",
       "scope": "device",
       "default": "blur",
-      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" },
+      "showIf": {
+        "setting": "theme",
+        "equals": "mywallpaper-quick"
+      },
       "options": [
-        { "label": "Blur", "value": "blur" },
-        { "label": "Acrylic blur", "value": "acrylic" },
-        { "label": "Transparent", "value": "transparent" },
-        { "label": "Accent color", "value": "accent" }
+        {
+          "label": "Blur",
+          "value": "blur"
+        },
+        {
+          "label": "Acrylic blur",
+          "value": "acrylic"
+        },
+        {
+          "label": "Transparent",
+          "value": "transparent"
+        },
+        {
+          "label": "Accent color",
+          "value": "accent"
+        }
       ]
     },
     {
@@ -109,7 +247,10 @@
       "parent": "surfaceSection",
       "scope": "device",
       "default": "#1f8fff",
-      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+      "showIf": {
+        "setting": "theme",
+        "equals": "mywallpaper-quick"
+      }
     },
     {
       "id": "opacity",
@@ -122,7 +263,10 @@
       "min": 0,
       "max": 255,
       "step": 1,
-      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+      "showIf": {
+        "setting": "theme",
+        "equals": "mywallpaper-quick"
+      }
     },
     {
       "id": "blurAmount",
@@ -135,7 +279,10 @@
       "min": 0,
       "max": 100,
       "step": 1,
-      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+      "showIf": {
+        "setting": "theme",
+        "equals": "mywallpaper-quick"
+      }
     },
     {
       "id": "layoutSection",
@@ -143,7 +290,10 @@
       "label": "Layout",
       "description": "Safe geometry controls that keep the taskbar inside its Windows-owned surface.",
       "parent": "appearanceSection",
-      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+      "showIf": {
+        "setting": "theme",
+        "equals": "mywallpaper-quick"
+      }
     },
     {
       "id": "layout",
@@ -152,10 +302,19 @@
       "parent": "layoutSection",
       "scope": "device",
       "default": "full",
-      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" },
+      "showIf": {
+        "setting": "theme",
+        "equals": "mywallpaper-quick"
+      },
       "options": [
-        { "label": "Full width", "value": "full" },
-        { "label": "Floating dock", "value": "floating" }
+        {
+          "label": "Full width",
+          "value": "full"
+        },
+        {
+          "label": "Floating dock",
+          "value": "floating"
+        }
       ]
     },
     {
@@ -169,7 +328,10 @@
       "min": 0,
       "max": 600,
       "step": 1,
-      "showIf": { "setting": "layout", "equals": "floating" }
+      "showIf": {
+        "setting": "layout",
+        "equals": "floating"
+      }
     },
     {
       "id": "bottomInset",
@@ -181,7 +343,10 @@
       "min": 0,
       "max": 16,
       "step": 1,
-      "showIf": { "setting": "layout", "equals": "floating" }
+      "showIf": {
+        "setting": "layout",
+        "equals": "floating"
+      }
     },
     {
       "id": "cornerRadius",
@@ -193,7 +358,10 @@
       "min": 0,
       "max": 32,
       "step": 1,
-      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+      "showIf": {
+        "setting": "theme",
+        "equals": "mywallpaper-quick"
+      }
     },
     {
       "id": "contentPadding",
@@ -206,7 +374,10 @@
       "min": 0,
       "max": 24,
       "step": 1,
-      "showIf": { "setting": "theme", "equals": "mywallpaper-quick" }
+      "showIf": {
+        "setting": "theme",
+        "equals": "mywallpaper-quick"
+      }
     },
     {
       "id": "themeCustomizationSection",
@@ -254,9 +425,18 @@
       "scope": "device",
       "default": "alert",
       "options": [
-        { "label": "Alert before blocking", "value": "alert" },
-        { "label": "Block other consumers", "value": "block" },
-        { "label": "Allow other consumers", "value": "allow" }
+        {
+          "label": "Alert before blocking",
+          "value": "alert"
+        },
+        {
+          "label": "Block other consumers",
+          "value": "block"
+        },
+        {
+          "label": "Allow other consumers",
+          "value": "allow"
+        }
       ]
     }
   ]

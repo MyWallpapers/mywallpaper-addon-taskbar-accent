@@ -16,7 +16,7 @@ export function mount({ layer, runtime }: CanvasAddonMountContext): () => void {
   const statusDetail = requireElement<HTMLElement>('small')
 
   const stopState = layer.native.hooks.onStateChange((statuses) => {
-    const status = statuses.find((candidate) => candidate.hookId === 'taskbar')
+    const status = statuses.find((candidate) => candidate.hookId === 'mywallpaper-taskbar-accent')
     if (!status) {
       renderStatus('disabled', 'Native hook is not attached. Open Settings → Add-ons for details.')
       return

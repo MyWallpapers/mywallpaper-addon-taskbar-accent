@@ -1,3 +1,8 @@
+> **Archived.** Taskbar Accent has been withdrawn from the MyWallpaper catalogue.
+> Taskbar styling is now provided by the MyWallpaper Taskbar add-on, built on the
+> public native add-on SDK. This repository stays available, read-only, with its
+> complete GPL-3.0 source, `LICENSE` and `THIRD_PARTY_NOTICES.md`.
+
 # Taskbar Accent
 
 Taskbar Accent is a GPL-3.0 MyWallpaper native add-on for the Windows 11
